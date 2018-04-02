@@ -64,7 +64,7 @@ jobs:
       image_resource:
         type: docker-image
         source:
-          repository: alpine
+          repository: alikov/kubectl
           tag: latest
       inputs:
         - name: trail
