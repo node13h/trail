@@ -42,6 +42,8 @@ kubectl_cmd () {
 }
 
 export -f kubectl_cmd
+export -f kubeconfig
+
 export KUBECTL_CMD=kubectl_cmd
 
 # TODO
