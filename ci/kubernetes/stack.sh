@@ -3,6 +3,8 @@
 set -eu
 set -o pipefail
 
+SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
+
 KUBECTL_CMD="${KUBECTL_CMD:-kubectl}"
 
 COMMAND="${1:-}"
@@ -72,15 +74,15 @@ case "$COMMAND" in
     up)
         {
             "$KUBECTL_CMD" create namespace "$NAMESPACE"
-            "$KUBECTL_CMD" --namespace "$NAMESPACE" create -f <(envsubst < deployment.yaml)
-            "$KUBECTL_CMD" --namespace "$NAMESPACE" create -f <(envsubst < service.yaml)
+            "$KUBECTL_CMD" --namespace "$NAMESPACE" create -f <(envsubst < "${SCRIPT_DIR}/deployment.yaml")
+            "$KUBECTL_CMD" --namespace "$NAMESPACE" create -f <(envsubst < "${SCRIPT_DIR}/service.yaml")
         } 1>&2
         printf '%s\n' "$NAMESPACE"
         ;;
     down)
         {
-            "$KUBECTL_CMD" --namespace "$NAMESPACE" delete -f <(envsubst < deployment.yaml)
-            "$KUBECTL_CMD" --namespace "$NAMESPACE" delete -f <(envsubst < service.yaml)
+            "$KUBECTL_CMD" --namespace "$NAMESPACE" delete -f <(envsubst < "${SCRIPT_DIR}/deployment.yaml")
+            "$KUBECTL_CMD" --namespace "$NAMESPACE" delete -f <(envsubst < "${SCRIPT_DIR}/service.yaml")
             "$KUBECTL_CMD" delete namespace "$NAMESPACE"
         } 1>&2
         ;;

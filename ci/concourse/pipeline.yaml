@@ -1,0 +1,80 @@
+---
+resources:
+- name: trail
+  type: git
+  source:
+    uri: ((repo_url))
+    branch: ((branch))
+    private_key: ((repo_key))
+- name: trail-image
+  type: docker-image
+  source:
+    repository: ((docker_app_repo))
+    insecure_registries: ((insecure_registries))
+
+jobs:
+- name: unit
+  plan:
+  - get: trail
+    trigger: true
+  - task: test
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: alikov/clojure-dev
+          tag: latest
+      inputs:
+        - name: trail
+      run:
+        path: echo
+        args: ["Run unit tests here"]
+
+- name: integration
+  plan:
+  - get: trail
+    passed:
+      - unit
+    trigger: true
+  - task: build-container
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: alikov/clojure-dev
+          tag: latest
+      inputs:
+        - name: trail
+      outputs:
+        - name: build
+      run:
+        path: sh
+        args:
+          - "-c"
+          - "cd trail; lein uberjar; cp -r target ../build/; cp Dockerfile ../build/; git rev-parse --short HEAD >../build/tag"
+  - put: trail-image
+    params:
+      build: build
+      tag: build/tag
+  - task: test-on-kubernetes
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: alpine
+          tag: latest
+      inputs:
+        - name: trail-image
+      run:
+        path: sh
+        args:
+          - "-c"
+          - "trail/ci/scripts/test-on-kubernetes.sh \"${DOCKER_APP_REPO}:$(cat trail-image/digest)\""
+      params:
+        DOCKER_APP_REPO: ((docker_app_repo))
+        KUBERNETES_API_URL: ((kubernetes_api_url))
+        KUBERNETES_API_USER: ((kubernetes_api_user))
+        KUBERNETES_API_PASSWORD: ((kubernetes_api_password))
