@@ -67,6 +67,7 @@ jobs:
           repository: alpine
           tag: latest
       inputs:
+        - name: trail
         - name: trail-image
       run:
         path: sh
