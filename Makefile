@@ -1,5 +1,6 @@
 DOCKER_TAG := latest
 DOCKER_REPOSITORY := docker.io/alikov/trail
+APP_INSTANCE_URL = http://$(shell cd kubernetes; bash stack.sh --namespace "$$(cat stack.namespace)" service-ip):8080
 
 .PHONY: test autotest clean uberjar build-image push-image kubernetes-up kubernetes-down integration-test
 
@@ -32,6 +33,5 @@ kubernetes-down:
 	bash stack.sh --namespace $$(cat stack.namespace) down && rm -f stack.namespace
 
 integration-test:
-	ip=$$(cd kubernetes; bash stack.sh --namespace "$$(cat stack.namespace)" service-ip); \
-	http_code=$$(curl -s -o /dev/null -w "%{http_code}" "http://$${ip}:8080/index.html"); \
+	http_code=$$(curl -s -o /dev/null -w "%{http_code}" "$(APP_INSTANCE_URL)/index.html"); \
 	[[ "$$http_code" = '200' ]]  # The most basic test for now. Will fail if the application is still starting up
