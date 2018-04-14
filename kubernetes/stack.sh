@@ -99,28 +99,25 @@ Usage ${0} OPTIONS COMMAND
 Manage the application on the Kubernetes cluster
 
 OPTIONS
-        --app-image
-
-COMMANDS
-        up              Deploy stack on Kubernetes. Will output the created
-                        an UUID-like namespace name to STDOUT on
-                        success (see example).
-        down            Destroy existing stack. Requires --namespace
-        pod             Output JSON pod object. Requires --namespace
-        service         Output JSON service object. Requires --namespace
-        service-ip      Return the cluster IP address of the service object.
-                        Requires --namespace
-        help            Show this help text
-
-OPTIONS
         --namespace     Namespace name (returned by the 'up' command)
-        --app-image     Specify the application Docker image tag to test.
+        --app-image     Specify an application Docker image to test.
                         Current value: ${APP_IMAGE}
         --postgres-image
-                        Specify the PostgreSQL Docker image tack to use. The
+                        Specify a PostgreSQL Docker image to use. The
                         image must enable the uuid-ossp extension for the
                         created database.
                         Current value: ${POSTGRES_IMAGE}
+
+COMMANDS
+        up              Deploy a stack on Kubernetes. Will output the created
+                        UUID-like namespace name to STDOUT on
+                        success (see example).
+        down            Destroy the existing stack. Requires --namespace
+        pod             Output the JSON pod object. Requires --namespace
+        service         Output the JSON service object. Requires --namespace
+        service-ip      Return the cluster IP address of the service object.
+                        Requires --namespace
+        help            Show this help text
 
 ENVIRONMENT VARIABLES
         KUBECTL_CMD     Set this variable to override the kubectl command.
@@ -129,6 +126,9 @@ ENVIRONMENT VARIABLES
 EXAMPLE
         ns=\$(${0} --wait up)
         ip=\$(${0} --namespace "\$ns" service-ip)
+        # At this point the containers are ready, but the application
+        # itself might be starting up, therefore you might need to
+        # check if service is responding before doing any testing.
         curl "http://\$ip:8080/swagger.json"
 
 EOF
