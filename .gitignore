@@ -1,4 +1,7 @@
 # -*- mode: gitignore; -*-
+
+kubernetes/stack.namespace
+
 *~
 \#*\#
 /.emacs.desktop
