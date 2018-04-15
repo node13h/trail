@@ -1,6 +1,7 @@
 # -*- mode: gitignore; -*-
 
 kubernetes/stack.namespace
+ci/concourse/credentials.yaml
 
 *~
 \#*\#
