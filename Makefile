@@ -33,5 +33,6 @@ kubernetes-down:
 	bash stack.sh --namespace $$(cat stack.namespace) down && rm -f stack.namespace
 
 integration-test:
-	http_code=$$(curl -s -o /dev/null -w "%{http_code}" "$(APP_INSTANCE_URL)/index.html"); \
-	[[ "$$http_code" = '200' ]]  # The most basic test for now. Will fail if the application is still starting up
+	bash scripts/wait_for_http.sh "$(APP_INSTANCE_URL)"; \
+	cd behave; \
+	behave -D app_base_url="$(APP_INSTANCE_URL)"
