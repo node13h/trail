@@ -1,4 +1,8 @@
 # -*- mode: gitignore; -*-
+
+kubernetes/stack.namespace
+ci/concourse/credentials.yaml
+
 *~
 \#*\#
 /.emacs.desktop
