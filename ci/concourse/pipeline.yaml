@@ -49,24 +49,24 @@ jobs:
         args:
           - "-c"
           - "cd trail; make uberjar; cp -r target ../build/; cp Dockerfile ../build/; cp Makefile ../build/; git rev-parse HEAD >../build/tag"
-  # - task: push-image
-  #   config:
-  #     platform: linux
-  #     image_resource:
-  #       type: docker-image
-  #       source:
-  #         repository: alikov/docker-client
-  #         tag: latest
-  #       inputs:
-  #         - name: build
-  #       run:
-  #         path: sh
-  #         args:
-  #           - "-c"
-  #           - "cd build; make DOCKER_REPOSITORY=${DOCKER_APP_REPO} DOCKER_TAG=$(cat tag) push-image"
-  #       params:
-  #         DOCKER_HOST: ((docker_host))
-  #         DOCKER_APP_REPO: ((docker_app_repo))
+  - task: push-image
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: alikov/docker-client
+          tag: latest
+      inputs:
+        - name: build
+      run:
+        path: sh
+        args:
+          - "-c"
+          - "cd build; make DOCKER_REPOSITORY=${DOCKER_APP_REPO} DOCKER_TAG=$(cat tag) push-image"
+      params:
+        DOCKER_HOST: ((docker_host))
+        DOCKER_APP_REPO: ((docker_app_repo))
 
   # - task: kubernetes-up
   #   config:
