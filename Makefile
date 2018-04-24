@@ -24,7 +24,7 @@ build-image: uberjar
 push-image: build-image
 	docker push $(DOCKER_REPOSITORY):$(DOCKER_TAG)
 
-kubernetes-up: push-image
+kubernetes-up:
 	cd kubernetes; \
 	! [[ -f stack.namespace ]] && bash stack.sh --app-image $(DOCKER_REPOSITORY):$(DOCKER_TAG) --wait up >stack.namespace
 
