@@ -9,7 +9,7 @@ apiVersion: v1
 clusters:
 - cluster:
     insecure-skip-tls-verify: true
-    server: "${KUBERNETES_API_URL}
+    server: "${KUBERNETES_API_URL}"
   name: kubecluster
 contexts:
 - context:
