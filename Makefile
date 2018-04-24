@@ -1,6 +1,7 @@
 DOCKER_TAG := latest
 DOCKER_REPOSITORY := docker.io/alikov/trail
-APP_INSTANCE_URL = http://$(shell cd kubernetes; bash stack.sh --namespace "$$(cat stack.namespace)" service-ip):8080
+STATE_FILE := stack.namespace
+APP_INSTANCE_URL = http://$(shell cd kubernetes; bash stack.sh --namespace "$$(cat $(STATE_FILE))" service-ip):8080
 
 .PHONY: test autotest clean uberjar build-image push-image kubernetes-up kubernetes-down integration-test
 
@@ -26,11 +27,11 @@ push-image: build-image
 
 kubernetes-up:
 	cd kubernetes; \
-	! [[ -f stack.namespace ]] && bash stack.sh --app-image $(DOCKER_REPOSITORY):$(DOCKER_TAG) --wait up >stack.namespace
+	! [[ -f $(STATE_FILE) ]] && bash stack.sh --app-image $(DOCKER_REPOSITORY):$(DOCKER_TAG) --wait up >$(STATE_FILE)
 
 kubernetes-down:
 	cd kubernetes; \
-	bash stack.sh --namespace $$(cat stack.namespace) down && rm -f stack.namespace
+	bash stack.sh --namespace $$(cat $(STATE_FILE)) down && rm -f $(STATE_FILE)
 
 integration-test:
 	bash scripts/wait_for_http.sh "$(APP_INSTANCE_URL)"; \
