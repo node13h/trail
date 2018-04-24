@@ -62,7 +62,8 @@ wait_for_pod () {
 
     local i=1
 
-    while ! pod_is_ready "$namespace" "$pod" && [[ "$i" -lt "$TIMEOUT" ]]; do
+    while ! pod_is_ready "$namespace" "$pod"; do
+        [[ "$i" -lt "$TIMEOUT" ]] || return 1
         sleep 1
         i=$((i+1))
     done
