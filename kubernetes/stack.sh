@@ -181,7 +181,7 @@ main () {
             pod_json "$namespace" stack
             ;;
         up)
-            namespace=$(bring_up)
+            namespace=$(set -eu; bring_up)
 
             if is_true "$wait"; then
                 wait_for_pod "$namespace" stack
