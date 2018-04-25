@@ -1,9 +1,11 @@
 DOCKER_TAG := latest
 DOCKER_REPOSITORY := docker.io/alikov/trail
-STATE_FILE := kubernetes/stack.namespace
-APP_INSTANCE_URL = http://$(shell ./kuberenetes/stack.sh --namespace "$$(cat $(STATE_FILE))" service-ip):8080
+STATE_FILE := stack.state
+ADDRESS_FILE := app.address
+APP_INSTANCE_URL = http://$(shell cat $(ADDRESS_FILE)):8080
 
-.PHONY: test autotest clean uberjar build-image push-image kubernetes-up kubernetes-down integration-test
+
+.PHONY: test autotest clean uberjar build-image push-image kubernetes-up kubernetes-down integration-test wait-for-http
 
 test:
 	lein midje
@@ -25,13 +27,19 @@ build-image: uberjar
 push-image: build-image
 	docker push $(DOCKER_REPOSITORY):$(DOCKER_TAG)
 
-kubernetes-up:
-	! [[ -f $(STATE_FILE) ]] && ./kubernetes/stack.sh --app-image $(DOCKER_REPOSITORY):$(DOCKER_TAG) --wait up >$(STATE_FILE)
+$(STATE_FILE):
+	./kubernetes/stack.sh --state-file $(STATE_FILE) --app-image $(DOCKER_REPOSITORY):$(DOCKER_TAG) --wait up
+
+$(ADDRESS_FILE): $(STATE_FILE)
+	./kubernetes/stack.sh --state-file $(STATE_FILE) service-ip >$(ADDRESS_FILE)
+
+kubernetes-up: $(STATE_FILE) $(ADDRESS_FILE)
 
 kubernetes-down:
-	./kubernetes/stack.sh --namespace $$(cat $(STATE_FILE)) down && rm -f $(STATE_FILE)
+	if [ -f $(STATE_FILE) ]; then ./kubernetes/stack.sh --state-file $(STATE_FILE) down && rm -f -- $(ADDRESS_FILE); fi
 
-integration-test:
-	./scripts/wait_for_http.sh "$(APP_INSTANCE_URL)"; \
-	cd behave; \
-	behave -D app_base_url="$(APP_INSTANCE_URL)"
+wait-for-http:
+	./scripts/wait_for_http.sh "$(APP_INSTANCE_URL)"
+
+integration-test: wait-for-http
+	behave -D app_base_url="$(APP_INSTANCE_URL)" behave/features

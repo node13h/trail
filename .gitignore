@@ -1,7 +1,8 @@
 # -*- mode: gitignore; -*-
 
-kubernetes/stack.namespace
+stack.state
 ci/concourse/credentials.yaml
+app.address
 
 *~
 \#*\#
