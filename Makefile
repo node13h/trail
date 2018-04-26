@@ -31,7 +31,7 @@ $(STATE_FILE):
 	./kubernetes/stack.sh --state-file $(STATE_FILE) --app-image $(DOCKER_REPOSITORY):$(DOCKER_TAG) --wait up
 
 $(ADDRESS_FILE): $(STATE_FILE)
-	./kubernetes/stack.sh --state-file $(STATE_FILE) service-ip >$(ADDRESS_FILE)
+	ip=$$(./kubernetes/stack.sh --state-file $(STATE_FILE) service-ip) && printf '%s\n' "$$ip" >$(ADDRESS_FILE)
 
 kubernetes-up: $(STATE_FILE) $(ADDRESS_FILE)
 
