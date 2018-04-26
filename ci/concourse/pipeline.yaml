@@ -64,36 +64,72 @@ jobs:
         args:
           - "-c"
           - "cd build; make DOCKER_REPOSITORY=${DOCKER_APP_REPO} DOCKER_TAG=$(cat tag) push-image"
+    params:
+      DOCKER_HOST: ((docker_host))
+      DOCKER_APP_REPO: ((docker_app_repo))
+
+  - task: kubernetes-up
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: alikov/kubectl
+          tag: latest
+      inputs:
+        - name: trail
+        - name: build
+      outputs:
+        - name: kubernetes
+      run:
+        path: sh
+        args:
+          - "-c"
+          - "cd trail; make DOCKER_REPOSITORY=${DOCKER_APP_REPO} DOCKER_TAG=$(cat ../build/tag) STATE_FILE=../kubernetes/stack.namespace ADDRESS_FILE=../kubernetes/app.address kubernetes-up"
+    params:
+      KUBECTL_CMD: "./kubernetes/kubectl-wrapper.sh"
+      DOCKER_APP_REPO: ((docker_app_repo))
+      KUBERNETES_API_URL: ((kubernetes_api_url))
+      KUBERNETES_API_USER: ((kubernetes_api_user))
+      KUBERNETES_API_PASSWORD: ((kubernetes_api_password))
+
+  # TODO Behave container
+  - task: integrations-tests
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: alpine
+          tag: latest
+      inputs:
+        - name: trail
+      run:
+        path: echo
+        args: ["Run integration tests here"]
+    ensure:
+      task: kubernetes-down
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            repository: alikov/kubectl
+            tag: latest
+        inputs:
+          - name: trail
+          - name: build
+          - name: kubernetes
+        run:
+          path: sh
+          args:
+            - "-c"
+            - "cd trail; make DOCKER_REPOSITORY=${DOCKER_APP_REPO} DOCKER_TAG=$(cat ../build/tag) STATE_FILE=../kubernetes/stack.namespace ADDRESS_FILE=../kubernetes/app.address kubernetes-down"
       params:
-        DOCKER_HOST: ((docker_host))
+        KUBECTL_CMD: "./kubernetes/kubectl-wrapper.sh"
         DOCKER_APP_REPO: ((docker_app_repo))
+        KUBERNETES_API_URL: ((kubernetes_api_url))
+        KUBERNETES_API_USER: ((kubernetes_api_user))
+        KUBERNETES_API_PASSWORD: ((kubernetes_api_password))
 
-  # - task: kubernetes-up
-  #   config:
-  #     platform: linux
-  #     image_resource:
-  #       type: docker-image
-  #       source:
-  #         repository: alikov/kubectl
-  #         tag: latest
-  #       inputs:
-  #         - name: trail
-  #         - name: build
-  #       outputs:
-  #         - name: kubernetes
-  #       run:
-  #         path: sh
-  #         args:
-  #           - "-c"
-  #           - "cd trail; make DOCKER_REPOSITORY=${DOCKER_APP_REPO} DOCKER_TAG=$(cat ../build/tag) KUBERNETES_STATE=../kubernetes/state.json kubernetes-up"
-  #       params:
-  #         KUBECTL_CMD: "./ci/kubectl-wrapper.sh"
-  #         DOCKER_APP_REPO: ((docker_app_repo))
-  #         KUBERNETES_API_URL: ((kubernetes_api_url))
-  #         KUBERNETES_API_USER: ((kubernetes_api_user))
-  #         KUBERNETES_API_PASSWORD: ((kubernetes_api_password))
-
-  # - task: integration-tests
-  #   ensure:
-  #     task: kubernetes-down
-  # - task: remove-image
+# - task: remove-image
