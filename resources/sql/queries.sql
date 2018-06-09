@@ -42,3 +42,9 @@ RETURNING id
 -- :doc Delete all leases ending before the to-date
 DELETE FROM leases
 WHERE "end-date" < :to-date
+
+
+-- :name delete! :! :n
+-- :doc Delete lease(s)
+DELETE FROM leases
+WHERE id IN (:v*:ids)
