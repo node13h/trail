@@ -17,7 +17,9 @@ FROM leases
                (cons "WHERE")
                (join " "))))))
 ~*/
-
+/*~
+(when (true? (:lock params)) "FOR UPDATE")
+~*/
 
 -- :name add! :<! :1
 -- :doc Add a lease to the store
