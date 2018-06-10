@@ -36,7 +36,7 @@
 (defn leases
   "Return a list of aggregated leases filtered by the optional filters"
   [filters tz]
-  (tac/leases ts/sorted-selection filters tz))
+  (tac/leases ts/selection filters tz))
 
 (defn add!
   "Add multiple leases to the store"

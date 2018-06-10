@@ -4,6 +4,7 @@
             [trail.handler :as th]
             [trail.core :as t]
             [trail.api.core :as tac]
+            [trail.leases :as tl]
             [ring.mock.request :as rmr]))
 
 (defn parse-body [body]
@@ -169,32 +170,37 @@
 
               (req (get "/api/v3/leases?ip=192.168.0.5&from-date=2000-01-01%2000:00:00&to-date=2000-01-01%2001:00:00") th/app "UTC"
                    status => 200
-                   (no-ids result) => [{:data {}
-                                        :duration 60
-                                        :ip "192.168.0.5"
-                                        :mac "dd:dd:dd:dd:dd:dd"
-                                        :start-date "2000-01-01 00:00:00"}
-                                       {:data {}
-                                        :duration 100
-                                        :ip "192.168.0.5"
-                                        :mac "dd:dd:dd:dd:dd:dd"
-                                        :start-date "2000-01-01 00:10:00"}]))
+                   (-> result
+                       no-ids
+                       tl/sorted) => [{:data {}
+                                       :duration 60
+                                       :ip "192.168.0.5"
+                                       :mac "dd:dd:dd:dd:dd:dd"
+                                       :start-date "2000-01-01 00:00:00"}
+                                      {:data {}
+                                       :duration 100
+                                       :ip "192.168.0.5"
+                                       :mac "dd:dd:dd:dd:dd:dd"
+                                       :start-date "2000-01-01 00:10:00"}]))
+
         (fact "can trim leases"
               (req (delete "/api/v3/leases" {:to-date "2000-01-01 00:02:40"}) th/app "UTC"
                    status => 200)
               (req (get "/api/v3/leases?from-date=2000-01-01%2000:00:00&to-date=2000-01-01%2001:00:00") th/app "UTC"
                    status => 200
-                   (no-ids result) => [{:data {}
-                                        :duration 161
-                                        :ip "192.168.0.2"
-                                        :mac "aa:aa:aa:aa:aa:aa"
-                                        :start-date "2000-01-01 00:00:00"}
-                                       {:data {}
-                                        :duration 100
-                                        :ip "192.168.0.5"
-                                        :mac "dd:dd:dd:dd:dd:dd"
-                                        :start-date "2000-01-01 00:10:00"}
-                                       ]))
+                   (-> result
+                       no-ids
+                       tl/sorted) => [{:data {}
+                                       :duration 161
+                                       :ip "192.168.0.2"
+                                       :mac "aa:aa:aa:aa:aa:aa"
+                                       :start-date "2000-01-01 00:00:00"}
+                                      {:data {}
+                                       :duration 100
+                                       :ip "192.168.0.5"
+                                       :mac "dd:dd:dd:dd:dd:dd"
+                                       :start-date "2000-01-01 00:10:00"}
+                                      ]))
 
         (fact "can trim leases using custom time zone"
               (req (delete "/api/v3/leases" {:to-date "2000-01-01 02:02:42"}) th/app "Europe/Vilnius"

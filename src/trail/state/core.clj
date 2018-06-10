@@ -2,7 +2,7 @@
   (:require [trail.state.sql :as tss]
             [trail.leases :as tl]))
 
-(def sorted-selection tss/sorted-selection)
+(def selection tss/selection)
 (def release! tss/release!)
 (def trim! tss/trim!)
 (defn add!
@@ -11,7 +11,7 @@
                       :mac (:mac lease)
                       :from-date (:start-date lease)
                       :to-date (tl/end-date lease)}
-                     tss/sorted-selection)
+                     tss/selection)
         sorted-all (tl/sorted (conj adjacent lease))
         earliest (first sorted-all)
         latest (last sorted-all)

@@ -66,11 +66,11 @@
     (doall (map f leases))))
 
 (defn leases
-  "Aggregate and format a list of leases produced by sorted-selection-f"
-  [sorted-selection-f filters tz]
+  "Aggregate and format a list of leases produced by selection-f"
+  [selection-f filters tz]
   (let [filters (parsed-map filters tz)]
     (-> filters
-        sorted-selection-f
+        selection-f
         (formatted-maps tz))))
 
 (defn release
