@@ -9,11 +9,16 @@
   (:import org.postgresql.util.PGobject
            clojure.lang.IPersistentMap))
 
-(m/defstate db
+(m/defstate ^:dynamic *db*
   :start (c/connect! {:jdbc-url (:database-url settings)})
-  :stop (c/disconnect! db))
+  :stop (c/disconnect! *db*))
 
-(c/bind-connection db "sql/queries.sql")
+(c/bind-connection *db* "sql/queries.sql")
+
+(defmacro with-transaction
+  [& forms]
+  `(c/with-transaction [*db*]
+    ~@forms))
 
 (extend-protocol jdbc/IResultSetReadColumn
   PGobject
