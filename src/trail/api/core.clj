@@ -71,7 +71,6 @@
   (let [filters (parsed-map filters tz)]
     (-> filters
         sorted-selection-f
-        tl/aggregates
         (formatted-maps tz))))
 
 (defn release

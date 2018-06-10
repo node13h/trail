@@ -67,40 +67,6 @@
                 (req (post "/api/v3/leases" leases) th/app "UTC"
                      status => 200)))
 
-        (fact "can update existing leases"
-              (let [leases [{:data {}
-                             :duration 30
-                             :ip "192.168.0.3"
-                             :mac "bb:bb:bb:bb:bb:bb"
-                             :start-date "2000-01-01 00:00:00"}]]
-                (req (post "/api/v3/leases" leases) th/app "UTC"
-                     status => 200))
-
-              (req (get "/api/v3/leases?ip=192.168.0.3&from-date=2000-01-01%2000:00:00&to-date=2000-01-01%2001:00:00") th/app "UTC"
-                   status => 200
-                   (no-ids result) => [{:data {}
-                                        :duration 30
-                                        :ip "192.168.0.3"
-                                        :mac "bb:bb:bb:bb:bb:bb"
-                                        :start-date "2000-01-01 00:00:00"}]))
-
-        (fact "can update exiting leases using custom time zone"
-              (let [leases [{:data {}
-                             :duration 60
-                             :ip "192.168.0.3"
-                             :mac "bb:bb:bb:bb:bb:bb"
-                             :start-date "2000-01-01 02:00:00"}]]
-                (req (post "/api/v3/leases" leases) th/app "Europe/Vilnius"
-                     status => 200))
-
-              (req (get "/api/v3/leases?ip=192.168.0.3&from-date=2000-01-01%2000:00:00&to-date=2000-01-01%2001:00:00") th/app "UTC"
-                   status => 200
-                   (no-ids result) => [{:data {}
-                                        :duration 60
-                                        :ip "192.168.0.3"
-                                        :mac "bb:bb:bb:bb:bb:bb"
-                                        :start-date "2000-01-01 00:00:00"}]))
-
         (fact "can create new leases using custom time zone"
               (let [leases [{:data {}
                              :duration 100
@@ -145,7 +111,7 @@
               (req (get "/api/v3/leases?ip=192.168.0.3&from-date=2000-01-01%2000:00:00&to-date=2000-01-01%2000:01:00") th/app "UTC"
                    status => 200
                    (no-ids result) => [{:data {}
-                                        :duration 60
+                                        :duration 100
                                         :ip "192.168.0.3"
                                         :mac "bb:bb:bb:bb:bb:bb"
                                         :start-date "2000-01-01 00:00:00"}]))
@@ -154,7 +120,7 @@
               (req (get "/api/v3/leases?ip=192.168.0.3&from-date=2000-01-01%2002:00:00&to-date=2000-01-01%2002:01:00") th/app "Europe/Vilnius"
                    status => 200
                    (no-ids result) => [{:data {}
-                                        :duration 60
+                                        :duration 100
                                         :ip "192.168.0.3"
                                         :mac "bb:bb:bb:bb:bb:bb"
                                         :start-date "2000-01-01 02:00:00"}]))
@@ -166,21 +132,6 @@
                    status => 200
                    (no-ids result) => [{:data {}
                                         :duration 161
-                                        :ip "192.168.0.2"
-                                        :mac "aa:aa:aa:aa:aa:aa"
-                                        :start-date "2000-01-01 00:00:00"}]))
-        (fact "releasing first lease in continuous series will detach it from the series"
-              (req (post "/api/v3/leases/released" {:ip "192.168.0.2" :end-date "2000-01-01 00:00:01"}) th/app "UTC"
-                   status => 200)
-              (req (get "/api/v3/leases?ip=192.168.0.2&from-date=2000-01-01%2000:00:00&to-date=2000-01-01%2001:00:00") th/app "UTC"
-                   status => 200
-                   (no-ids result) => [{:data {}
-                                        :duration 101
-                                        :ip "192.168.0.2"
-                                        :mac "aa:aa:aa:aa:aa:aa"
-                                        :start-date "2000-01-01 00:01:00"}
-                                       {:data {}
-                                        :duration 1
                                         :ip "192.168.0.2"
                                         :mac "aa:aa:aa:aa:aa:aa"
                                         :start-date "2000-01-01 00:00:00"}]))
@@ -219,33 +170,34 @@
               (req (get "/api/v3/leases?ip=192.168.0.5&from-date=2000-01-01%2000:00:00&to-date=2000-01-01%2001:00:00") th/app "UTC"
                    status => 200
                    (no-ids result) => [{:data {}
-                                        :duration 100
-                                        :ip "192.168.0.5"
-                                        :mac "dd:dd:dd:dd:dd:dd"
-                                        :start-date "2000-01-01 00:10:00"}
-                                       {:data {}
                                         :duration 60
                                         :ip "192.168.0.5"
                                         :mac "dd:dd:dd:dd:dd:dd"
-                                        :start-date "2000-01-01 00:00:00"}]))
+                                        :start-date "2000-01-01 00:00:00"}
+                                       {:data {}
+                                        :duration 100
+                                        :ip "192.168.0.5"
+                                        :mac "dd:dd:dd:dd:dd:dd"
+                                        :start-date "2000-01-01 00:10:00"}]))
         (fact "can trim leases"
               (req (delete "/api/v3/leases" {:to-date "2000-01-01 00:02:40"}) th/app "UTC"
                    status => 200)
               (req (get "/api/v3/leases?from-date=2000-01-01%2000:00:00&to-date=2000-01-01%2001:00:00") th/app "UTC"
                    status => 200
                    (no-ids result) => [{:data {}
+                                        :duration 161
+                                        :ip "192.168.0.2"
+                                        :mac "aa:aa:aa:aa:aa:aa"
+                                        :start-date "2000-01-01 00:00:00"}
+                                       {:data {}
                                         :duration 100
                                         :ip "192.168.0.5"
                                         :mac "dd:dd:dd:dd:dd:dd"
                                         :start-date "2000-01-01 00:10:00"}
-                                       {:data {}
-                                        :duration 101
-                                        :ip "192.168.0.2"
-                                        :mac "aa:aa:aa:aa:aa:aa"
-                                        :start-date "2000-01-01 00:01:00"}]))
+                                       ]))
 
         (fact "can trim leases using custom time zone"
-              (req (delete "/api/v3/leases" {:to-date "2000-01-01 02:02:41"}) th/app "Europe/Vilnius"
+              (req (delete "/api/v3/leases" {:to-date "2000-01-01 02:02:42"}) th/app "Europe/Vilnius"
                    status => 200)
               (req (get "/api/v3/leases?from-date=2000-01-01%2000:00:00&to-date=2000-01-01%2001:00:00") th/app "UTC"
                    status => 200
@@ -253,12 +205,7 @@
                                         :duration 100
                                         :ip "192.168.0.5"
                                         :mac "dd:dd:dd:dd:dd:dd"
-                                        :start-date "2000-01-01 00:10:00"}
-                                       {:data {}
-                                        :duration 1
-                                        :ip "192.168.0.2"
-                                        :mac "aa:aa:aa:aa:aa:aa"
-                                        :start-date "2000-01-01 00:02:40"}]))
+                                        :start-date "2000-01-01 00:10:00"}]))
         (fact "can trim all leases"
               (req (delete "/api/v3/leases" {:to-date "2020-01-01 00:02:40"}) th/app "UTC"
                    status => 200)

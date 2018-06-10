@@ -81,6 +81,8 @@
   [lease1 lease2]
   (+ (seconds-between lease1 lease2) (duration lease2)))
 
+(def duration-span combined-duration)
+
 (defn required-action
   "Calculate the merge action for two leases"
   [lease1 lease2]
