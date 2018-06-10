@@ -11,7 +11,8 @@
     (let [adjacent (-> {:ip (:ip lease)
                         :mac (:mac lease)
                         :from-date (:start-date lease)
-                        :to-date (tl/end-date lease)}
+                        :to-date (tl/end-date lease)
+                        :lock true}
                        tss/selection)
           sorted-all (tl/sorted (conj adjacent lease))
           earliest (first sorted-all)
