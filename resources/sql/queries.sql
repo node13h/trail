@@ -1,5 +1,5 @@
 -- :name selection :? :*
--- :doc Return a sorted list of leases filtered by the optional arguments.
+-- :doc Return a list of leases filtered by the optional arguments.
 /* :require [clojure.string :refer [join]] */
 SELECT id, ip, mac, "start-date", EXTRACT(EPOCH FROM "end-date" - "start-date") as duration, data
 FROM leases
