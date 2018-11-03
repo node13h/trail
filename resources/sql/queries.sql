@@ -29,7 +29,6 @@ ON CONFLICT ON CONSTRAINT "ip-start-date" DO UPDATE
    SET (mac, "end-date", data) = (:mac::macaddr, :start-date::timestamp with time zone + make_interval(secs => :duration), :data)
 RETURNING id
 
-
 -- :name add-slice! :! :n
 -- :doc Add slice
 INSERT INTO slices ("lease-id", "offset")
