@@ -15,16 +15,28 @@
                         :lock true}
                        tss/selection)
           sorted-all (tl/sorted (conj adjacent lease))
-          earliest (first sorted-all)
-          latest (last sorted-all)
-          inserted-id (-> {:ip (:ip earliest)
-                           :mac (:mac earliest)
-                           :start-date (:start-date earliest)
-                           :duration (tl/duration-span earliest latest)
-                           :data (:data earliest)}
-                          tss/add!
-                          :id)
-          redundant-ids (remove (partial = inserted-id) (map :id adjacent))]
-      (when (seq redundant-ids)
-        (tss/delete! {:ids redundant-ids}))
+          first-lease (first sorted-all)
+          last-lease (last sorted-all)
+          merged-lease {:ip (:ip first-lease)
+                        :mac (:mac first-lease)
+                        :start-date (:start-date first-lease)
+                        :duration (tl/duration-span first-lease last-lease)
+                        :data (:data first-lease)}
+          inserted-id (:id (tss/add! merged-lease))
+          redundant-leases (remove #(= inserted-id (:id %1)) adjacent)
+          offset-from-merged (tl/seconds-between merged-lease lease)]
+      (when-not (zero? offset-from-merged)
+        (tss/add-slice! {:lease-id inserted-id
+                         :offset offset-from-merged}))
+      (when (seq redundant-leases)
+        (doseq [redundant-lease redundant-leases
+                :let [offset-from-merged (tl/seconds-between
+                                          merged-lease redundant-lease)
+                      redundant-id (:id redundant-lease)]]
+          (tss/add-slice! {:lease-id inserted-id
+                           :offset offset-from-merged})
+          (tss/move-slices! {:lease-id redundant-id
+                             :to-lease-id inserted-id
+                             :delta offset-from-merged}))
+        (tss/delete! {:ids (map :id redundant-leases)}))
       {:id inserted-id})))

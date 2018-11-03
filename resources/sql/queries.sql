@@ -30,6 +30,18 @@ ON CONFLICT ON CONSTRAINT "ip-start-date" DO UPDATE
 RETURNING id
 
 
+-- :name add-slice! :! :n
+-- :doc Add slice
+INSERT INTO slices ("lease-id", "offset")
+VALUES (:lease-id, :offset)
+ON CONFLICT ON CONSTRAINT "slices_pkey" DO NOTHING
+
+-- :name move-slices! :! :n
+-- :doc Move slices from one lease to another adjusting the offset
+UPDATE slices
+SET "offset" = "offset" + :delta, "lease-id" = :to-lease-id
+WHERE "lease-id" = :lease-id
+
 -- :name release! :<! :*
 -- :doc Truncate the duration of the matching leases
 UPDATE leases SET "end-date" = :end-date
