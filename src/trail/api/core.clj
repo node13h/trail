@@ -59,11 +59,11 @@
   [coll tz]
   (map #(formatted-map %1 tz) coll))
 
-(defn map-doall
-  "Map f to a collection of leases"
-  [f leases tz]
+(defn add
+  "Add multiple leases using add-f"
+  [add-f leases tz]
   (let [leases (parsed-maps leases tz)]
-    (doall (map f leases))))
+    (doall (map add-f leases))))
 
 (defn leases
   "Aggregate and format a list of leases produced by selection-f"

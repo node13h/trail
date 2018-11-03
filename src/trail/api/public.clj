@@ -41,7 +41,7 @@
 (defn add!
   "Add multiple leases to the store"
   [leases tz]
-  (tac/map-doall ts/add! leases tz))
+  (tac/add ts/add! leases tz))
 
 (defn release!
   "Release leases"
