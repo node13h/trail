@@ -56,21 +56,27 @@
                         :start-date (:start-date first-lease)
                         :duration (tl/duration-span first-lease last-lease)
                         :data (:data first-lease)}
-          inserted-id (:id (tss/add! merged-lease))
+          inserted-id (-> merged-lease
+                          tss/add!
+                          :id)
           redundant-leases (remove #(= inserted-id (:id %1)) adjacent)
           offset-from-merged (tl/seconds-between merged-lease lease)]
       (when-not (zero? offset-from-merged)
-        (tss/add-slice! {:lease-id inserted-id
-                         :offset offset-from-merged}))
+        (-> {:lease-id inserted-id
+             :offset offset-from-merged}
+            tss/add-slice!))
       (when (seq redundant-leases)
         (doseq [redundant-lease redundant-leases
                 :let [offset-from-merged (tl/seconds-between
                                           merged-lease redundant-lease)
                       redundant-id (:id redundant-lease)]]
-          (tss/add-slice! {:lease-id inserted-id
-                           :offset offset-from-merged})
-          (tss/move-slices! {:lease-id redundant-id
-                             :to-lease-id inserted-id
-                             :delta offset-from-merged}))
-        (tss/delete! {:ids (map :id redundant-leases)}))
+          (-> {:lease-id inserted-id
+               :offset offset-from-merged}
+              tss/add-slice!)
+          (-> {:lease-id redundant-id
+               :to-lease-id inserted-id
+               :delta offset-from-merged}
+              tss/move-slices!))
+        (-> {:ids (map :id redundant-leases)}
+            tss/delete!))
       {:id inserted-id})))
