@@ -21,7 +21,7 @@ FROM leases
 (when (true? (:lock params)) "FOR UPDATE")
 ~*/
 
--- :name add! :<! :1
+-- :name add-or-update-lease! :<! :1
 -- :doc Add a lease to the store
 INSERT INTO leases (ip, mac, "start-date", "end-date", data)
 VALUES (:ip::inet, :mac::macaddr, :start-date, :start-date::timestamp with time zone + make_interval(secs => :duration), :data)
@@ -62,7 +62,7 @@ WHERE "lease-id" = :lease-id
 (when (some? (:to params)) "AND \"offset\" <= :to")
 ~*/
 
--- :name release! :<! :*
+-- :name truncate-lease! :<! :*
 -- :doc Truncate the duration of lease
 UPDATE leases SET "end-date" = :end-date
 WHERE id = :id
