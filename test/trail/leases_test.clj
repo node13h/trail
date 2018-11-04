@@ -10,6 +10,13 @@
    :duration 12345
    :data {:key "val"}})
 
+(def a-lease-offset-by-minute
+  {:ip "192.168.0.1"
+   :mac "aa:aa:aa:aa:aa:aa"
+   :start-date (date-time 2000 1 1 0 1 0)
+   :duration 12285
+   :data {:key "val"}})
+
 (def a-zero-duration-lease
   {:ip "192.168.0.1"
    :mac "aa:aa:aa:aa:aa:aa"
@@ -73,3 +80,9 @@
              (tl/sorted [c1-lease a-lease]) => (list a-lease c1-lease))
        (fact "mixed collection is sorted by IP, then by start-date"
              (tl/sorted [c3-lease a-lease b-lease c1-lease c2-lease]) => (list a-lease b-lease c1-lease c2-lease c3-lease)))
+
+(facts "about `offset-begining`"
+       (fact "zero offset returns same lease"
+             (tl/offset-begining a-lease 0) => a-lease)
+       (fact "offsetting works correctly"
+             (tl/offset-begining a-lease 60) => a-lease-offset-by-minute))

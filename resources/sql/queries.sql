@@ -29,6 +29,21 @@ ON CONFLICT ON CONSTRAINT "ip-start-date" DO UPDATE
    SET (mac, "end-date", data) = (:mac::macaddr, :start-date::timestamp with time zone + make_interval(secs => :duration), :data)
 RETURNING id
 
+-- :name first-slice-after :? :1
+-- :doc Return first offset following the specified one
+SELECT "offset"
+FROM slices
+WHERE "lease-id" = :lease-id
+      AND "offset" > :offset
+ORDER BY "offset" ASC
+LIMIT 1
+
+-- :name delete-slice! :! :n
+-- :doc Delete single slice
+DELETE FROM slices
+WHERE "lease-id" = :lease-id
+      AND "offset" = :offset
+
 -- :name add-slice! :! :n
 -- :doc Add slice
 INSERT INTO slices ("lease-id", "offset")
@@ -40,13 +55,17 @@ ON CONFLICT ON CONSTRAINT "slices_pkey" DO NOTHING
 UPDATE slices
 SET "offset" = "offset" + :delta, "lease-id" = :to-lease-id
 WHERE "lease-id" = :lease-id
+/*~
+(when (some? (:from params)) "AND \"offset\" >= :from")
+~*/
+/*~
+(when (some? (:to params)) "AND \"offset\" <= :to")
+~*/
 
 -- :name release! :<! :*
--- :doc Truncate the duration of the matching leases
+-- :doc Truncate the duration of lease
 UPDATE leases SET "end-date" = :end-date
-WHERE ip = :ip::inet
-      AND "end-date" > :end-date
-      AND "start-date" <= :end-date
+WHERE id = :id
 RETURNING id
 
 

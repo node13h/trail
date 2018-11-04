@@ -136,6 +136,21 @@
                                         :ip "192.168.0.2"
                                         :mac "aa:aa:aa:aa:aa:aa"
                                         :start-date "2000-01-01 00:00:00"}]))
+        (fact "releasing a lease in the middle of aggregated series will break them into multipe leases"
+              (req (post "/api/v3/leases/released" {:ip "192.168.0.2" :end-date "2000-01-01 00:00:59"}) th/app "UTC"
+                   status => 200)
+              (req (get "/api/v3/leases?ip=192.168.0.2&from-date=2000-01-01%2000:00:00&to-date=2000-01-01%2001:00:00") th/app "UTC"
+                   status => 200
+                   (no-ids result) => [{:data {}
+                                        :duration 59
+                                        :ip "192.168.0.2"
+                                        :mac "aa:aa:aa:aa:aa:aa"
+                                        :start-date "2000-01-01 00:00:00"}
+                                       {:data {}
+                                        :duration 101
+                                        :ip "192.168.0.2"
+                                        :mac "aa:aa:aa:aa:aa:aa"
+                                        :start-date "2000-01-01 00:01:00"}]))
         (fact "can release lease using custom time zone"
               (req (post "/api/v3/leases/released" {:ip "192.168.0.3" :end-date "2000-01-01 02:00:01"}) th/app "Europe/Vilnius"
                    status => 200)
@@ -191,10 +206,10 @@
                    (-> result
                        no-ids
                        tl/sorted) => [{:data {}
-                                       :duration 161
+                                       :duration 101
                                        :ip "192.168.0.2"
                                        :mac "aa:aa:aa:aa:aa:aa"
-                                       :start-date "2000-01-01 00:00:00"}
+                                       :start-date "2000-01-01 00:01:00"}
                                       {:data {}
                                        :duration 100
                                        :ip "192.168.0.5"

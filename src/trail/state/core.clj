@@ -3,7 +3,41 @@
             [trail.leases :as tl]))
 
 (def selection tss/selection)
-(def release! tss/release!)
+(defn release!
+  [{:keys [ip end-date]}]
+  (tss/with-transaction
+    (when-first [lease (-> {:ip ip
+                            :from-date end-date
+                            :to-date end-date}
+                           tss/selection)]
+      (let [lease-id (:id lease)
+            cut-offset (tl/interval-seconds (:start-date lease) end-date)]
+        (-> {:id lease-id
+             :end-date end-date}
+            tss/release!)
+        (-> {:lease-id lease-id
+             :offset cut-offset}
+            tss/delete-slice!)
+        (when-let [tail-offset (-> {:lease-id lease-id
+                                    :offset cut-offset}
+                                   tss/first-slice-after
+                                   :offset)]
+          (let [inserted-id (-> lease
+                                (tl/offset-begining tail-offset)
+                                tss/add!
+                                :id)]
+
+            (-> {:lease-id lease-id
+                 :offset tail-offset}
+                tss/delete-slice!)
+
+            (-> {:lease-id lease-id
+                 :to-lease-id inserted-id
+                 :delta (- tail-offset)
+                 :from tail-offset}
+                tss/move-slices!)))
+        {:id lease-id}))))
+
 (def trim! tss/trim!)
 (defn add!
   [lease]

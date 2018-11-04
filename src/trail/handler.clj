@@ -64,7 +64,7 @@
                      {:result (tap/add! leases tz)})))
 
             (POST "/leases/released" []
-                  :return {:result [s/Any]}
+                  :return {:result s/Any}
                   :body-params [ip :- s/Str
                                 end-date :- s/Str]
                   :summary "Release leases"

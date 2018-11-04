@@ -31,3 +31,10 @@
   "Return a sequence of leases sorted by IP and start-date"
   [coll]
   (sort-by (juxt :ip start-epoch) coll))
+
+(defn offset-begining
+  "Change the start date for the lease keeping the end date the same"
+  [lease offset]
+  (->> {:start-date (t/plus (:start-date lease) (t/seconds offset))
+        :duration (- (:duration lease) offset)}
+       (merge lease)))
