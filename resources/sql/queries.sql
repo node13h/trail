@@ -79,3 +79,10 @@ WHERE "end-date" < :to-date
 -- :doc Delete lease(s)
 DELETE FROM leases
 WHERE id IN (:v*:ids)
+
+
+-- :name add-release! :! :n
+-- :doc Add release record
+INSERT INTO releases (ip, "end-date")
+VALUES (:ip::inet, :end-date::timestamp with time zone)
+ON CONFLICT ON CONSTRAINT "releases_pkey" DO NOTHING

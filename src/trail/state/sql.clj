@@ -45,6 +45,9 @@
   "Release a lease reconstructing the tail if necessary"
   [{:keys [ip end-date]}]
   (with-transaction
+    (-> {:ip ip
+         :end-date end-date}
+        add-release!)
     (when-first [lease (-> {:ip ip
                             :from-date end-date
                             :to-date end-date}
