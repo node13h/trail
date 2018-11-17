@@ -81,7 +81,7 @@
         {:id lease-id}))))
 
 (defn add!
-  "Add the lease to the store merging ith existing ones if necessary"
+  "Add the lease to the store merging with existing ones if necessary"
   [lease]
   (with-transaction
     (let [adjacent (-> {:ip (:ip lease)
