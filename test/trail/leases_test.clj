@@ -86,3 +86,19 @@
              (tl/offset-begining a-lease 0) => a-lease)
        (fact "offsetting works correctly"
              (tl/offset-begining a-lease 60) => a-lease-offset-by-minute))
+
+(facts "about `truncated`"
+       (let [lease {:ip "192.168.0.1"
+                    :mac "aa:aa:aa:aa:aa:aa"
+                    :start-date (date-time 2000 1 1 0 0 0)
+                    :duration 100
+                    :data {:key "val"}}
+             truncated-lease {:ip "192.168.0.1"
+                              :mac "aa:aa:aa:aa:aa:aa"
+                              :start-date (date-time 2000 1 1 0 0 0)
+                              :duration 60
+                              :data {:key "val"}}]
+         (fact "same lease is returned if at-date is higher than lease end-date"
+               (tl/truncated lease (date-time 2001 1 1 0 2 0)) => lease)
+         (fact "lease is truncated"
+               (tl/truncated lease (date-time 2000 1 1 0 1 0)) => truncated-lease)))

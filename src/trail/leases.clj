@@ -38,3 +38,11 @@
   (->> {:start-date (t/plus (:start-date lease) (t/seconds offset))
         :duration (- (:duration lease) offset)}
        (merge lease)))
+
+(defn truncated
+  "Truncate a lease at the specified date"
+  [lease at-date]
+  (let [new-duration (interval-seconds (:start-date lease) at-date)]
+    (if (> (:duration lease) new-duration)
+      (assoc lease :duration new-duration)
+      lease)))
