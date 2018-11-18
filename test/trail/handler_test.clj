@@ -200,6 +200,44 @@
                                        :mac "dd:dd:dd:dd:dd:dd"
                                        :start-date "2000-01-01 00:10:00"}]))
 
+        (fact "adding an already released lease results in truncated lease"
+              (req (post "/api/v3/leases/released" {:ip "192.168.0.6" :end-date "2000-01-01 00:02:41"}) th/app "UTC"
+                   status => 200)
+              (let [leases [{:data {}
+                             :duration 180
+                             :ip "192.168.0.6"
+                             :mac "aa:aa:aa:aa:aa:aa"
+                             :start-date "2000-01-01 00:00:00"}]]
+                (req (post "/api/v3/leases" leases) th/app "UTC"
+                     status => 200))
+              (req (get "/api/v3/leases?ip=192.168.0.6&from-date=2000-01-01%2000:00:00&to-date=2000-01-01%2001:00:00") th/app "UTC"
+                   status => 200
+                   (no-ids result) => [{:data {}
+                                        :duration 161
+                                        :ip "192.168.0.6"
+                                        :mac "aa:aa:aa:aa:aa:aa"
+                                        :start-date "2000-01-01 00:00:00"}]))
+        (fact "earliest release date is applied when adding an already released lease"
+              (req (post "/api/v3/leases/released" {:ip "192.168.0.7" :end-date "2000-01-01 00:02:00"}) th/app "UTC"
+                   status => 200)
+              (req (post "/api/v3/leases/released" {:ip "192.168.0.7" :end-date "2000-01-01 00:01:00"}) th/app "UTC"
+                   status => 200)
+              (req (post "/api/v3/leases/released" {:ip "192.168.0.7" :end-date "2000-01-01 00:01:30"}) th/app "UTC"
+                   status => 200)
+              (let [leases [{:data {}
+                             :duration 180
+                             :ip "192.168.0.7"
+                             :mac "aa:aa:aa:aa:aa:aa"
+                             :start-date "2000-01-01 00:00:00"}]]
+                (req (post "/api/v3/leases" leases) th/app "UTC"
+                     status => 200))
+              (req (get "/api/v3/leases?ip=192.168.0.7&from-date=2000-01-01%2000:00:00&to-date=2000-01-01%2001:00:00") th/app "UTC"
+                   status => 200
+                   (no-ids result) => [{:data {}
+                                        :duration 60
+                                        :ip "192.168.0.7"
+                                        :mac "aa:aa:aa:aa:aa:aa"
+                                        :start-date "2000-01-01 00:00:00"}]))
         (fact "can trim leases"
               (req (delete "/api/v3/leases" {:to-date "2000-01-01 00:02:40"}) th/app "UTC"
                    status => 200)
@@ -217,6 +255,11 @@
                                        :ip "192.168.0.5"
                                        :mac "dd:dd:dd:dd:dd:dd"
                                        :start-date "2000-01-01 00:10:00"}
+                                      {:data {}
+                                       :duration 161
+                                       :ip "192.168.0.6"
+                                       :mac "aa:aa:aa:aa:aa:aa"
+                                       :start-date "2000-01-01 00:00:00"}
                                       ]))
 
         (fact "can trim leases using custom time zone"
