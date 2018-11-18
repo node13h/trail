@@ -69,7 +69,7 @@ WHERE id = :id
 RETURNING id
 
 
--- :name trim! :! :n
+-- :name trim-leases! :! :n
 -- :doc Delete all leases ending before the to-date
 DELETE FROM leases
 WHERE "end-date" < :to-date
@@ -86,3 +86,19 @@ WHERE id IN (:v*:ids)
 INSERT INTO releases (ip, "end-date")
 VALUES (:ip::inet, :end-date::timestamp with time zone)
 ON CONFLICT ON CONSTRAINT "releases_pkey" DO NOTHING
+
+
+-- :name get-released :? :1
+-- :doc Get release record
+SELECT "end-date"
+FROM releases
+WHERE ip = :ip::inet
+  AND "end-date" > :start-date::timestamp with time zone
+  AND "end-date" < :start-date::timestamp with time zone + make_interval(secs => :duration)
+ORDER BY "end-date"
+LIMIT 1
+
+-- :name trim-releases! :! :n
+-- :doc Delete all releases ending before the to-date
+DELETE FROM releases
+WHERE "end-date" < :to-date

@@ -84,7 +84,11 @@
   "Add the lease to the store merging with existing ones if necessary"
   [lease]
   (with-transaction
-    (let [adjacent (-> {:ip (:ip lease)
+    (let [lease (->> lease
+                     get-released
+                     :end-date
+                     (tl/truncated lease))
+          adjacent (-> {:ip (:ip lease)
                         :mac (:mac lease)
                         :from-date (:start-date lease)
                         :to-date (tl/end-date lease)
@@ -122,3 +126,9 @@
         (-> {:ids (map :id redundant-leases)}
             delete!))
       {:id inserted-id})))
+
+(defn trim!
+  "Delete objects ending before the end-date"
+  [params]
+  (with-transaction
+    ((juxt trim-releases! trim-leases!) params)))

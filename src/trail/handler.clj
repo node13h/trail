@@ -74,7 +74,7 @@
                      {:result (tap/release! ip end-date tz)})))
 
             (DELETE "/leases" []
-                    :return {:result s/Int}
+                    :return {:result [s/Any]}
                     :body-params [to-date :- s/Str]
                     :summary "Trim leases"
                     (ok
