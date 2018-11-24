@@ -52,3 +52,8 @@
   "Delete all leases ending before the to-date"
   [to-date tz]
   (tac/trim ts/trim! to-date tz))
+
+(defn trim-renewals!
+  "Delete all renewals before the to-date"
+  [to-date tz]
+  (tac/trim-renewals ts/trim-renewals! to-date tz))

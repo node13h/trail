@@ -102,3 +102,8 @@ WHERE "lease-id" = :lease-id
       AND "at-date" > :after-date
 ORDER BY "at-date" ASC
 LIMIT 1
+
+-- :name trim-renewals! :! :n
+-- :doc Delete all renewals before the to-date
+DELETE FROM renewals
+WHERE "at-date" < :to-date

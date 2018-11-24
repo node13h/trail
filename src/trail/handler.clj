@@ -73,6 +73,14 @@
                      (info (format "RELEASE %s %s %s" tz ip end-date))
                      {:result (tap/release! ip end-date tz)})))
 
+            (DELETE "/leases/renewals" []
+                    :return {:result s/Any}
+                    :body-params [to-date :- s/Str]
+                    :summary "Trim lease renewals"
+                    (ok
+                     (do
+                       (info (format "TRIM-RENEWALS %s %s" tz to-date))
+                       {:result (tap/trim-renewals! to-date tz)})))
             (DELETE "/leases" []
                     :return {:result [s/Any]}
                     :body-params [to-date :- s/Str]

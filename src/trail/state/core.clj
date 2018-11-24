@@ -5,4 +5,5 @@
 (def selection tss/selection)
 (def release! tss/release!)
 (def trim! tss/trim!)
+(def trim-renewals! tss/trim-renewals!)
 (def add! tss/add!)
