@@ -1,7 +1,10 @@
 (ns trail.state.core
-  (:require [trail.state.sql :as tss]))
+  (:require [trail.state.sql :as tss]
+            [trail.leases :as tl]))
 
-(def sorted-selection tss/sorted-selection)
-(def add! tss/add!)
+(def selection tss/selection)
 (def release! tss/release!)
 (def trim! tss/trim!)
+(def trim-renewals! tss/trim-renewals!)
+(def trim-releases! tss/trim-releases!)
+(def add! tss/add!)

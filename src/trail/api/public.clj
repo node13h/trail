@@ -36,12 +36,12 @@
 (defn leases
   "Return a list of aggregated leases filtered by the optional filters"
   [filters tz]
-  (tac/leases ts/sorted-selection filters tz))
+  (tac/leases ts/selection filters tz))
 
 (defn add!
   "Add multiple leases to the store"
   [leases tz]
-  (tac/map-doall ts/add! leases tz))
+  (tac/add ts/add! leases tz))
 
 (defn release!
   "Release leases"
@@ -52,3 +52,13 @@
   "Delete all leases ending before the to-date"
   [to-date tz]
   (tac/trim ts/trim! to-date tz))
+
+(defn trim-renewals!
+  "Delete all renewals before the to-date"
+  [to-date tz]
+  (tac/trim-renewals ts/trim-renewals! to-date tz))
+
+(defn trim-releases!
+  "Delete all releases before the to-date"
+  [to-date tz]
+  (tac/trim-releases ts/trim-releases! to-date tz))

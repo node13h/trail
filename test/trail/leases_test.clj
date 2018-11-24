@@ -1,125 +1,141 @@
 (ns trail.leases-test
   (:require [midje.sweet :refer :all]
-            [trail.fixtures :refer :all]
             [trail.leases :as tl]
-            [clj-time.core :as t]))
+            [clj-time.core :as t :refer [date-time]]))
 
-(facts "about `this-lease?`"
-       (fact "matching returns true"
-             (tl/this-lease? a1 (:ip a1) (:start-date a1)))
-       (fact "non-matching IP returns false"
-             (tl/this-lease? a1 "0.0.0.0" (:start-date a1)) => false)
-       (fact "non-matching date returns false"
-             (tl/this-lease? a1 (:ip a1) (t/date-time 1999)) => false)
-       (fact "can match different time zones"
-             (tl/this-lease? a1 (:ip a1) (t/to-time-zone (:start-date a1) (t/time-zone-for-id "Europe/Vilnius"))) => true))
+(def a-lease
+  {:ip "192.168.0.1"
+   :mac "aa:aa:aa:aa:aa:aa"
+   :start-date (date-time 2000 1 1 0 0 0)
+   :duration 12345
+   :data {:key "val"}})
 
-(facts "about `add`"
-       (fact "can add to empty coll"
-             (tl/add [] a1) => [a1])
-       (fact "can add to non-empty coll"
-             (tl/add [a1] b1) => [a1 b1])
-       (fact "mergeable will merge"
-             (tl/add [b1] b2) => [b-aggregated]))
+(def a-zero-duration-lease
+  {:ip "192.168.0.1"
+   :mac "aa:aa:aa:aa:aa:aa"
+   :start-date (date-time 2000 1 1 0 0 0)
+   :duration 0
+   :data {:key "val"}})
 
-(facts "about `aggregates` lists"
-       (fact "empty input will produce empty output"
-             (tl/aggregates (list)) => (list))
-       (fact "can add single"
-             (tl/aggregates (list a1)) => (list a1))
-       (fact "can add multiple and the order is reversed"
-             (tl/aggregates (list a1 b1)) => (list b1 a1))
-       (fact "adding multiple mergeable will merge to single"
-             (tl/aggregates (list a1 a2 a3)) => (list a-aggregated))
-       (fact "will not merge when there is a gap"
-             (tl/aggregates (list a1 a3)) => (list a3 a1))
-       (fact "can add mixed"
-             (tl/aggregates (list a1 a2 a3 b1)) => (list b1 a-aggregated))
-       (fact "duplicates will merge together"
-             (tl/aggregates (list a1 a1)) => (list a1))
-       (fact "adding newer overlapping with different MAC will truncate existing"
-             (tl/aggregates (list b1 c1)) => (list c1 b1-truncated))
-       (fact "adding newer non-overlapping with different MAC will not truncate existing"
-             (tl/aggregates (list b1 c2)) => (list c2 b1)))
+(def b-lease
+  {:ip "192.168.0.2"
+   :mac "bb:bb:bb:bb:bb:bb"
+   :start-date (date-time 2001 2 3 4 5 6)
+   :duration 100
+   :data {:key "val"}})
 
-(facts "about `aggregates` vectors"
-       (fact "empty input will produce empty output"
-             (tl/aggregates []) => [])
-       (fact "can add single"
-             (tl/aggregates [a1]) => [a1])
-       (fact "can add multiple and the order is preserved"
-             (tl/aggregates [a1 b1]) => [a1 b1])
-       (fact "adding multiple mergeable will merge to single"
-             (tl/aggregates [a1 a2 a3]) => [a-aggregated])
-       (fact "will not merge when there is a gap"
-             (tl/aggregates [a1 a3]) => [a1 a3])
-       (fact "can add mixed"
-             (tl/aggregates [a1 a2 a3 b1]) => [a-aggregated b1])
-       (fact "duplicates will merge together"
-             (tl/aggregates [a1 a1]) => [a1])
-       (fact "adding newer overlapping with different MAC will truncate existing"
-             (tl/aggregates [b1 c1]) => [b1-truncated c1])
-       (fact "adding newer non-overlapping with different MAC will not truncate existing"
-             (tl/aggregates [b1 c2]) => [b1 c2]))
+(def c1-lease
+  {:ip "192.168.0.3"
+   :mac "cc:cc:cc:cc:cc:cc"
+   :start-date (date-time 1999 1 1 0 0 0)
+   :duration 50
+   :data {:key "val"}})
 
-(facts "about `filter-ip`"
-       (fact "empty input will produce empty output"
-             (tl/filter-ip [] "") => [])
-       (fact "can match in single element collection"
-             (tl/filter-ip [a1] "192.168.0.2") => [a1])
-       (fact "all non-matching will produce empty output"
-             (tl/filter-ip [b1 b2] "192.168.0.2") => [])
-       (fact "can match multiple"
-             (tl/filter-ip [a2 a3 b1 c1] "192.168.0.2") => [a2 a3]))
+(def c2-lease
+  {:ip "192.168.0.3"
+   :mac "cc:cc:cc:cc:cc:cc"
+   :start-date (date-time 2000 1 1 0 0 0)
+   :duration 50
+   :data {:key "val"}})
 
-(facts "about `filter-mac`"
-       (fact "empty input will produce empty output"
-             (tl/filter-mac [] "") => [])
-       (fact "can match in single element collection"
-             (tl/filter-mac [a1] "aa:aa:aa:aa:aa:aa") => [a1])
-       (fact "all non-matching will produce empty output"
-             (tl/filter-mac [b1 b2] "aa:aa:aa:aa:aa:aa") => [])
-       (fact "can match multiple"
-             (tl/filter-mac [a2 a3 b1 c1] "aa:aa:aa:aa:aa:aa") => [a2 a3]))
+(def c3-lease
+  {:ip "192.168.0.3"
+   :mac "cc:cc:cc:cc:cc:cc"
+   :start-date (date-time 2001 1 1 0 0 0)
+   :duration 50
+   :data {:key "val"}})
 
-(facts "about `filter-from`"
-       (fact "empty input will produce empty output"
-             (tl/filter-from [] before-all) => [])
-       (fact "after will match"
-             (tl/filter-from [a1] before-all) => [a1])
-       (fact "equal will match"
-             (tl/filter-from [a1] start-a1) => [a1])
-       (fact "during will match"
-             (tl/filter-from [a1] during-a1) => [a1])
-       (fact "before will not match"
-             (tl/filter-from [a1] after-a1) => [])
-       (fact "all before will produce empty output"
-             (tl/filter-from [a1 b1] after-all) => [])
-       (fact "can match multiple"
-             (tl/filter-from [a1 a2 a3] after-a1) => [a2 a3]))
 
-(facts "about `filter-to`"
-       (fact "empty input will produce empty output"
-             (tl/filter-to [] after-all) => [])
-       (fact "before will match"
-             (tl/filter-to [a1] after-all) => [a1])
-       (fact "equal will match"
-             (tl/filter-to [a1] start-a1) => [a1])
-       (fact "during will match"
-             (tl/filter-to [a1] during-a1) => [a1])
-       (fact "after will not match"
-             (tl/filter-to [a1] before-a1) => [])
-       (fact "all after will produce empty output"
-             (tl/filter-to [a1 b1] before-all) => [])
-       (fact "can match multiple"
-             (tl/filter-to [a1 a2 a3] just-after-a1) => [a1 a2]))
+(facts "about `end-date`"
+       (fact "calculates end date"
+             (tl/end-date a-lease) => (date-time 2000 1 1 3 25 45))
+       (fact "zero duration is handled properly"
+             (tl/end-date a-zero-duration-lease) => (date-time 2000 1 1 0 0 0)))
 
-(facts "about `release-matching`"
-       (fact "empty input will produce empty output"
-             (tl/release-matching [] "0.0.0.0" after-all) => [])
-       (fact "matching will be released"
-             (tl/release-matching [a1 a2 b1] "192.168.0.2" during-a1-and-a2) => [a1-truncated a2-truncated b1])
-       (fact "non-matching IP will have no effect"
-             (tl/release-matching [a1 a2 b1] "192.168.0.4" during-a1) => [a1 a2 b1])
-       (fact "non-matching date will have no effect"
-             (tl/release-matching [a1 a2 b1] "192.168.0.2" after-all) => [a1 a2 b1]))
+(facts "about `start-epoch`"
+       (fact "returns start-date in UNIX epoch"
+             (tl/start-epoch a-lease) => 946684800))
+
+(facts "about `interval-seconds`"
+       (fact "returns number of seconds between two dates"
+             (tl/interval-seconds (date-time 2000 1 1 0 0 0) (date-time 2000 1 1 4 15 28)) => 15328))
+
+(facts "about `duration-span`"
+       (fact "returns number of seconds between lease1 start and lease2 end"
+             (tl/duration-span a-lease b-lease) => 34488406))
+
+(facts "about `sorted`"
+       (fact "empty input returns empty list"
+             (tl/sorted []) => (list))
+       (fact "single-element collection as the single-element list"
+             (tl/sorted [a-lease]) => (list a-lease))
+       (fact "collection is sorted by IP first"
+             (tl/sorted [c1-lease a-lease]) => (list a-lease c1-lease))
+       (fact "mixed collection is sorted by IP, then by start-date"
+             (tl/sorted [c3-lease a-lease b-lease c1-lease c2-lease]) => (list a-lease b-lease c1-lease c2-lease c3-lease)))
+
+(facts "about `adjust-start-date`"
+       (let [lease {:ip "192.168.0.1"
+                    :mac "aa:aa:aa:aa:aa:aa"
+                    :start-date (date-time 2000 1 1 0 0 0)
+                    :duration 60
+                    :data {:key "val"}}
+             new-start-date (date-time 2000 1 1 0 0 15)
+             adjusted-lease {:ip "192.168.0.1"
+                             :mac "aa:aa:aa:aa:aa:aa"
+                             :start-date (date-time 2000 1 1 0 0 15)
+                             :duration 45
+                             :data {:key "val"}}]
+         (fact "offsetting works correctly"
+               (tl/adjust-start-date lease new-start-date) => adjusted-lease)))
+
+(facts "about `truncated`"
+       (let [lease {:ip "192.168.0.1"
+                    :mac "aa:aa:aa:aa:aa:aa"
+                    :start-date (date-time 2000 1 1 0 0 0)
+                    :duration 100
+                    :data {:key "val"}}
+             truncated-lease {:ip "192.168.0.1"
+                              :mac "aa:aa:aa:aa:aa:aa"
+                              :start-date (date-time 2000 1 1 0 0 0)
+                              :duration 60
+                              :data {:key "val"}}]
+         (fact "same lease is returned if at-date is higher than lease end-date"
+               (tl/truncated lease (date-time 2001 1 1 0 2 0)) => lease)
+         (fact "lease is truncated"
+               (tl/truncated lease (date-time 2000 1 1 0 1 0)) => truncated-lease)))
+
+(facts "about `same-lease?`"
+       (let [lease1 {:ip "192.168.0.1"
+                     :mac "aa:aa:aa:aa:aa:aa"
+                     :start-date (date-time 2000 1 1 0 0 0)
+                     :duration 100
+                     :data {:key "val"}}
+             lease2 {:ip "192.168.0.1"
+                     :mac "bb:bb:bb:bb:bb:bb"
+                     :start-date (date-time 2000 1 1 0 0 0)
+                     :duration 100
+                     :data {:key "val"}}
+             lease3 {:ip "192.168.0.1"
+                     :mac "aa:aa:aa:aa:aa:aa"
+                     :start-date (date-time 2000 1 1 0 0 0)
+                     :duration 500
+                     :data {:key "val"}}
+             lease4 {:ip "192.168.0.2"
+                     :mac "aa:aa:aa:aa:aa:aa"
+                     :start-date (date-time 2000 1 1 0 0 0)
+                     :duration 100
+                     :data {:key "val"}}
+             lease5 {:ip "192.168.0.1"
+                     :mac "aa:aa:aa:aa:aa:aa"
+                     :start-date (date-time 2000 1 1 0 0 1)
+                     :duration 100
+                     :data {:key "val"}}]
+         (fact "different MAC addresses does not matter"
+               (tl/same-lease? lease1 lease2) => truthy)
+         (fact "different durations do not matter"
+               (tl/same-lease? lease1 lease3) => truthy)
+         (fact "different IP addresses do matter"
+               (tl/same-lease? lease1 lease4) => falsey)
+         (fact "different start dates do matter"
+               (tl/same-lease? lease1 lease5) => falsey)))

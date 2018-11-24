@@ -64,7 +64,7 @@
                      {:result (tap/add! leases tz)})))
 
             (POST "/leases/released" []
-                  :return {:result [s/Any]}
+                  :return {:result s/Any}
                   :body-params [ip :- s/Str
                                 end-date :- s/Str]
                   :summary "Release leases"
@@ -73,11 +73,27 @@
                      (info (format "RELEASE %s %s %s" tz ip end-date))
                      {:result (tap/release! ip end-date tz)})))
 
+            (DELETE "/leases/renewals" []
+                    :return {:result s/Any}
+                    :body-params [to-date :- s/Str]
+                    :summary "Trim lease renewals"
+                    (ok
+                     (do
+                       (info (format "TRIM-RENEWALS %s %s" tz to-date))
+                       {:result (tap/trim-renewals! to-date tz)})))
             (DELETE "/leases" []
-                    :return {:result s/Int}
+                    :return {:result [s/Any]}
                     :body-params [to-date :- s/Str]
                     :summary "Trim leases"
                     (ok
                      (do
                        (info (format "TRIM %s %s" tz to-date))
-                       {:result (tap/trim! to-date tz)}))))))
+                       {:result (tap/trim! to-date tz)})))
+            (DELETE "/releases" []
+                    :return {:result s/Any}
+                    :body-params [to-date :- s/Str]
+                    :summary "Trim lease release records"
+                    (ok
+                     (do
+                       (info (format "TRIM-RELEASES %s %s" tz to-date))
+                       {:result (tap/trim-releases! to-date tz)}))))))
