@@ -29,39 +29,6 @@ ON CONFLICT ON CONSTRAINT "ip-start-date" DO UPDATE
    SET (mac, "end-date", data) = (:mac::macaddr, :start-date::timestamp with time zone + make_interval(secs => :duration), :data)
 RETURNING id
 
--- :name first-slice-after :? :1
--- :doc Return first offset following the specified one
-SELECT "offset"
-FROM slices
-WHERE "lease-id" = :lease-id
-      AND "offset" > :offset
-ORDER BY "offset" ASC
-LIMIT 1
-
--- :name delete-slice! :! :n
--- :doc Delete single slice
-DELETE FROM slices
-WHERE "lease-id" = :lease-id
-      AND "offset" = :offset
-
--- :name add-slice! :! :n
--- :doc Add slice
-INSERT INTO slices ("lease-id", "offset")
-VALUES (:lease-id, :offset)
-ON CONFLICT ON CONSTRAINT "slices_pkey" DO NOTHING
-
--- :name move-slices! :! :n
--- :doc Move slices from one lease to another adjusting the offset
-UPDATE slices
-SET "offset" = "offset" + :delta, "lease-id" = :to-lease-id
-WHERE "lease-id" = :lease-id
-/*~
-(when (some? (:from params)) "AND \"offset\" >= :from")
-~*/
-/*~
-(when (some? (:to params)) "AND \"offset\" <= :to")
-~*/
-
 -- :name truncate-lease! :<! :*
 -- :doc Truncate the duration of lease
 UPDATE leases SET "end-date" = :end-date
@@ -102,3 +69,36 @@ LIMIT 1
 -- :doc Delete all releases ending before the to-date
 DELETE FROM releases
 WHERE "end-date" < :to-date
+
+-- :name add-renewal! :! :n
+-- :doc Add renewal entry
+INSERT INTO renewals ("lease-id", "at-date")
+VALUES (:lease-id, :at-date::timestamp with time zone)
+ON CONFLICT ON CONSTRAINT "renewals_pkey" DO NOTHING
+
+-- :name move-renewals! :! :n
+-- :doc Move renewals from one lease to another
+UPDATE renewals
+SET "lease-id" = :to-lease-id
+WHERE "lease-id" = :lease-id
+/*~
+(when (some? (:from-date params)) "AND \"at-date\" >= :from-date::timestamp with time zone")
+~*/
+/*~
+(when (some? (:to-date params)) "AND \"at-date\" <= :to-date::timestamp with time zone")
+~*/
+
+-- :name delete-renewal! :! :n
+-- :doc Delete single renewal
+DELETE FROM renewals
+WHERE "lease-id" = :lease-id
+      AND "at-date" = :at-date::timestamp with time zone
+
+-- :name first-renewal-after :? :1
+-- :doc Return first renewal following the specified date
+SELECT "at-date"
+FROM renewals
+WHERE "lease-id" = :lease-id
+      AND "at-date" > :after-date::timestamp with time zone
+ORDER BY "at-date" ASC
+LIMIT 1

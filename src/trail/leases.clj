@@ -32,13 +32,6 @@
   [coll]
   (sort-by (juxt :ip start-epoch) coll))
 
-(defn offset-begining
-  "Change the start date for the lease keeping the end date the same"
-  [lease offset]
-  (->> {:start-date (t/plus (:start-date lease) (t/seconds offset))
-        :duration (- (:duration lease) offset)}
-       (merge lease)))
-
 (defn truncated
   "Truncate a lease at the specified date"
   [lease at-date]
@@ -46,3 +39,17 @@
     (if (> (:duration lease) new-duration)
       (assoc lease :duration new-duration)
       lease)))
+
+(defn adjust-start-date
+  "Change the start date for the lease keeping the end date the same"
+  [lease start-date]
+  (->> {:start-date start-date
+        :duration (- (:duration lease) (interval-seconds (:start-date lease) start-date))}
+       (merge lease)))
+
+(defn same-lease?
+  "Return true if start-date and ip addresses of both leases are the same"
+  [lease1 lease2]
+  (and
+   (t/equal? (:start-date lease1) (:start-date lease2))
+   (= (:ip lease1) (:ip lease2))))

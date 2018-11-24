@@ -10,13 +10,6 @@
    :duration 12345
    :data {:key "val"}})
 
-(def a-lease-offset-by-minute
-  {:ip "192.168.0.1"
-   :mac "aa:aa:aa:aa:aa:aa"
-   :start-date (date-time 2000 1 1 0 1 0)
-   :duration 12285
-   :data {:key "val"}})
-
 (def a-zero-duration-lease
   {:ip "192.168.0.1"
    :mac "aa:aa:aa:aa:aa:aa"
@@ -81,11 +74,20 @@
        (fact "mixed collection is sorted by IP, then by start-date"
              (tl/sorted [c3-lease a-lease b-lease c1-lease c2-lease]) => (list a-lease b-lease c1-lease c2-lease c3-lease)))
 
-(facts "about `offset-begining`"
-       (fact "zero offset returns same lease"
-             (tl/offset-begining a-lease 0) => a-lease)
-       (fact "offsetting works correctly"
-             (tl/offset-begining a-lease 60) => a-lease-offset-by-minute))
+(facts "about `adjust-start-date`"
+       (let [lease {:ip "192.168.0.1"
+                    :mac "aa:aa:aa:aa:aa:aa"
+                    :start-date (date-time 2000 1 1 0 0 0)
+                    :duration 60
+                    :data {:key "val"}}
+             new-start-date (date-time 2000 1 1 0 0 15)
+             adjusted-lease {:ip "192.168.0.1"
+                             :mac "aa:aa:aa:aa:aa:aa"
+                             :start-date (date-time 2000 1 1 0 0 15)
+                             :duration 45
+                             :data {:key "val"}}]
+         (fact "offsetting works correctly"
+               (tl/adjust-start-date lease new-start-date) => adjusted-lease)))
 
 (facts "about `truncated`"
        (let [lease {:ip "192.168.0.1"
@@ -102,3 +104,38 @@
                (tl/truncated lease (date-time 2001 1 1 0 2 0)) => lease)
          (fact "lease is truncated"
                (tl/truncated lease (date-time 2000 1 1 0 1 0)) => truncated-lease)))
+
+(facts "about `same-lease?`"
+       (let [lease1 {:ip "192.168.0.1"
+                     :mac "aa:aa:aa:aa:aa:aa"
+                     :start-date (date-time 2000 1 1 0 0 0)
+                     :duration 100
+                     :data {:key "val"}}
+             lease2 {:ip "192.168.0.1"
+                     :mac "bb:bb:bb:bb:bb:bb"
+                     :start-date (date-time 2000 1 1 0 0 0)
+                     :duration 100
+                     :data {:key "val"}}
+             lease3 {:ip "192.168.0.1"
+                     :mac "aa:aa:aa:aa:aa:aa"
+                     :start-date (date-time 2000 1 1 0 0 0)
+                     :duration 500
+                     :data {:key "val"}}
+             lease4 {:ip "192.168.0.2"
+                     :mac "aa:aa:aa:aa:aa:aa"
+                     :start-date (date-time 2000 1 1 0 0 0)
+                     :duration 100
+                     :data {:key "val"}}
+             lease5 {:ip "192.168.0.1"
+                     :mac "aa:aa:aa:aa:aa:aa"
+                     :start-date (date-time 2000 1 1 0 0 1)
+                     :duration 100
+                     :data {:key "val"}}]
+         (fact "different MAC addresses does not matter"
+               (tl/same-lease? lease1 lease2) => truthy)
+         (fact "different durations do not matter"
+               (tl/same-lease? lease1 lease3) => truthy)
+         (fact "different IP addresses do matter"
+               (tl/same-lease? lease1 lease4) => falsey)
+         (fact "different start dates do matter"
+               (tl/same-lease? lease1 lease5) => falsey)))

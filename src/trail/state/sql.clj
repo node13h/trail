@@ -52,32 +52,30 @@
                             :from-date end-date
                             :to-date end-date}
                            selection)]
-      (let [lease-id (:id lease)
-            cut-offset (tl/interval-seconds (:start-date lease) end-date)]
+      (let [lease-id (:id lease)]
         (-> {:id lease-id
              :end-date end-date}
             truncate-lease!)
         (-> {:lease-id lease-id
-             :offset cut-offset}
-            delete-slice!)
-        (when-let [tail-offset (-> {:lease-id lease-id
-                                    :offset cut-offset}
-                                   first-slice-after
-                                   :offset)]
+             :at-date end-date}
+            delete-renewal!)
+        (when-let [tail-start-date (-> {:lease-id lease-id
+                                        :after-date end-date}
+                                       first-renewal-after
+                                       :at-date)]
           (let [inserted-id (-> lease
-                                (tl/offset-begining tail-offset)
+                                (tl/adjust-start-date tail-start-date)
                                 add-or-update-lease!
                                 :id)]
 
             (-> {:lease-id lease-id
-                 :offset tail-offset}
-                delete-slice!)
+                 :at-date tail-start-date}
+                delete-renewal!)
 
             (-> {:lease-id lease-id
                  :to-lease-id inserted-id
-                 :delta (- tail-offset)
-                 :from tail-offset}
-                move-slices!)))
+                 :from-date tail-start-date}
+                move-renewals!)))
         {:id lease-id}))))
 
 (defn add!
@@ -105,24 +103,20 @@
           inserted-id (-> merged-lease
                           add-or-update-lease!
                           :id)
-          redundant-leases (remove #(= inserted-id (:id %1)) adjacent)
-          offset-from-merged (tl/seconds-between merged-lease lease)]
-      (when-not (zero? offset-from-merged)
+          redundant-leases (remove #(= inserted-id (:id %1)) adjacent)]
+      (when-not (tl/same-lease? merged-lease lease)
         (-> {:lease-id inserted-id
-             :offset offset-from-merged}
-            add-slice!))
+             :at-date (:start-date lease)}
+            add-renewal!))
       (when (seq redundant-leases)
         (doseq [redundant-lease redundant-leases
-                :let [offset-from-merged (tl/seconds-between
-                                          merged-lease redundant-lease)
-                      redundant-id (:id redundant-lease)]]
+                :let [redundant-id (:id redundant-lease)]]
           (-> {:lease-id inserted-id
-               :offset offset-from-merged}
-              add-slice!)
+               :at-date (:start-date redundant-lease)}
+              add-renewal!)
           (-> {:lease-id redundant-id
-               :to-lease-id inserted-id
-               :delta offset-from-merged}
-              move-slices!))
+               :to-lease-id inserted-id}
+              move-renewals!))
         (-> {:ids (map :id redundant-leases)}
             delete!))
       {:id inserted-id})))
