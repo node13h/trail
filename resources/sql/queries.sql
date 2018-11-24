@@ -51,7 +51,7 @@ WHERE id IN (:v*:ids)
 -- :name add-release! :! :n
 -- :doc Add release record
 INSERT INTO releases (ip, "end-date")
-VALUES (:ip::inet, :end-date::timestamp with time zone)
+VALUES (:ip::inet, :end-date)
 ON CONFLICT ON CONSTRAINT "releases_pkey" DO NOTHING
 
 
@@ -60,7 +60,7 @@ ON CONFLICT ON CONSTRAINT "releases_pkey" DO NOTHING
 SELECT "end-date"
 FROM releases
 WHERE ip = :ip::inet
-  AND "end-date" > :start-date::timestamp with time zone
+  AND "end-date" > :start-date
   AND "end-date" < :start-date::timestamp with time zone + make_interval(secs => :duration)
 ORDER BY "end-date"
 LIMIT 1
@@ -73,7 +73,7 @@ WHERE "end-date" < :to-date
 -- :name add-renewal! :! :n
 -- :doc Add renewal entry
 INSERT INTO renewals ("lease-id", "at-date")
-VALUES (:lease-id, :at-date::timestamp with time zone)
+VALUES (:lease-id, :at-date)
 ON CONFLICT ON CONSTRAINT "renewals_pkey" DO NOTHING
 
 -- :name move-renewals! :! :n
@@ -82,23 +82,23 @@ UPDATE renewals
 SET "lease-id" = :to-lease-id
 WHERE "lease-id" = :lease-id
 /*~
-(when (some? (:from-date params)) "AND \"at-date\" >= :from-date::timestamp with time zone")
+(when (some? (:from-date params)) "AND \"at-date\" >= :from-date")
 ~*/
 /*~
-(when (some? (:to-date params)) "AND \"at-date\" <= :to-date::timestamp with time zone")
+(when (some? (:to-date params)) "AND \"at-date\" <= :to-date")
 ~*/
 
 -- :name delete-renewal! :! :n
 -- :doc Delete single renewal
 DELETE FROM renewals
 WHERE "lease-id" = :lease-id
-      AND "at-date" = :at-date::timestamp with time zone
+      AND "at-date" = :at-date
 
 -- :name first-renewal-after :? :1
 -- :doc Return first renewal following the specified date
 SELECT "at-date"
 FROM renewals
 WHERE "lease-id" = :lease-id
-      AND "at-date" > :after-date::timestamp with time zone
+      AND "at-date" > :after-date
 ORDER BY "at-date" ASC
 LIMIT 1
