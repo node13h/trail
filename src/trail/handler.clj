@@ -88,4 +88,12 @@
                     (ok
                      (do
                        (info (format "TRIM %s %s" tz to-date))
-                       {:result (tap/trim! to-date tz)}))))))
+                       {:result (tap/trim! to-date tz)})))
+            (DELETE "/releases" []
+                    :return {:result s/Any}
+                    :body-params [to-date :- s/Str]
+                    :summary "Trim lease release records"
+                    (ok
+                     (do
+                       (info (format "TRIM-RELEASES %s %s" tz to-date))
+                       {:result (tap/trim-releases! to-date tz)}))))))

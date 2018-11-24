@@ -6,4 +6,5 @@
 (def release! tss/release!)
 (def trim! tss/trim!)
 (def trim-renewals! tss/trim-renewals!)
+(def trim-releases! tss/trim-releases!)
 (def add! tss/add!)

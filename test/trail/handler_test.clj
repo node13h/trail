@@ -270,25 +270,65 @@
                      status => 200)
                 (req (get "/api/v3/leases?ip=192.168.0.8&from-date=2000-01-01%2000:00:00&to-date=2000-01-01%2001:00:00") th/app "UTC"
                    status => 200
-                   (no-ids result) => [{:data {}
-                                        :duration 1
-                                        :ip "192.168.0.8"
-                                        :mac "aa:aa:aa:aa:aa:aa"
-                                        :start-date "2000-01-01 00:00:00"}])
-                (req (get "/api/v3/leases?ip=192.168.0.9&from-date=2000-01-01%2000:00:00&to-date=2000-01-01%2001:00:00") th/app "UTC"
-                   status => 200
                    (-> result
                        no-ids
                        tl/sorted) => [{:data {}
                                        :duration 1
-                                       :ip "192.168.0.9"
-                                       :mac "bb:bb:bb:bb:bb:bb"
-                                       :start-date "2000-01-01 00:00:00"}
-                                      {:data {}
+                                       :ip "192.168.0.8"
+                                       :mac "aa:aa:aa:aa:aa:aa"
+                                       :start-date "2000-01-01 00:00:00"}])
+                (req (get "/api/v3/leases?ip=192.168.0.9&from-date=2000-01-01%2000:00:00&to-date=2000-01-01%2001:00:00") th/app "UTC"
+                     status => 200
+                     (-> result
+                         no-ids
+                         tl/sorted) => [{:data {}
+                                         :duration 1
+                                         :ip "192.168.0.9"
+                                         :mac "bb:bb:bb:bb:bb:bb"
+                                         :start-date "2000-01-01 00:00:00"}
+                                        {:data {}
+                                         :duration 60
+                                         :ip "192.168.0.9"
+                                         :mac "bb:bb:bb:bb:bb:bb"
+                                         :start-date "2000-01-01 00:02:00"}])))
+        (fact "can trim lease release records"
+              (let [leases [{:data {}
+                             :duration 120
+                             :ip "192.168.0.10"
+                             :mac "aa:aa:aa:aa:aa:aa"
+                             :start-date "2000-01-01 00:00:00"}
+                            {:data {}
+                             :duration 120
+                             :ip "192.168.0.11"
+                             :mac "bb:bb:bb:bb:bb:bb"
+                             :start-date "2000-01-01 00:00:00"}
+                            ]]
+                (req (post "/api/v3/leases/released" {:ip "192.168.0.10" :end-date "2000-01-01 00:00:01"}) th/app "UTC"
+                     status => 200)
+                (req (post "/api/v3/leases/released" {:ip "192.168.0.11" :end-date "2000-01-01 00:01:00"}) th/app "UTC"
+                     status => 200)
+                (req (delete "/api/v3/releases" {:to-date "2000-01-01 00:01:00"}) th/app "UTC"
+                     status => 200)
+                (req (post "/api/v3/leases" leases) th/app "UTC"
+                     status => 200)
+                (req (get "/api/v3/leases?ip=192.168.0.10&from-date=2000-01-01%2000:00:00&to-date=2000-01-01%2001:00:00") th/app "UTC"
+                   status => 200
+                   (-> result
+                       no-ids
+                       tl/sorted) => [{:data {}
+                                       :duration 120
+                                       :ip "192.168.0.10"
+                                       :mac "aa:aa:aa:aa:aa:aa"
+                                       :start-date "2000-01-01 00:00:00"}])
+                (req (get "/api/v3/leases?ip=192.168.0.11&from-date=2000-01-01%2000:00:00&to-date=2000-01-01%2001:00:00") th/app "UTC"
+                     status => 200
+                   (-> result
+                       no-ids
+                       tl/sorted) => [{:data {}
                                        :duration 60
-                                       :ip "192.168.0.9"
+                                       :ip "192.168.0.11"
                                        :mac "bb:bb:bb:bb:bb:bb"
-                                       :start-date "2000-01-01 00:02:00"}])))
+                                       :start-date "2000-01-01 00:00:00"}])))
         (fact "can trim leases"
               (req (delete "/api/v3/leases" {:to-date "2000-01-01 00:02:40"}) th/app "UTC"
                    status => 200)

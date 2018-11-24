@@ -57,3 +57,8 @@
   "Delete all renewals before the to-date"
   [to-date tz]
   (tac/trim-renewals ts/trim-renewals! to-date tz))
+
+(defn trim-releases!
+  "Delete all releases before the to-date"
+  [to-date tz]
+  (tac/trim-releases ts/trim-releases! to-date tz))

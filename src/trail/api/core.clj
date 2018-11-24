@@ -90,3 +90,9 @@
   [trim-renewals-f to-date tz]
   (let [to-date (parsed-dt to-date tz)]
     (trim-renewals-f {:to-date to-date})))
+
+(defn trim-releases
+  "Use trim-releases-f to delete all releases before the to-date"
+  [trim-releases-f to-date tz]
+  (let [to-date (parsed-dt to-date tz)]
+    (trim-releases-f {:to-date to-date})))
