@@ -1,0 +1,31 @@
+---
+
+version: '3'
+services:
+  app:
+    environment:
+      DATABASE_URL: postgres://postgres:hunter2@postgres/postgres
+    image: docker.io/alikov/trail
+    ports:
+      - "3000:3000"
+    links:
+      - postgres
+    entrypoint:
+      - sh
+      - "-c"
+      - "cd /app; java -jar server.jar migrate; java -jar server.jar start"
+  postgres:
+    shm_size: "2gb"
+    volumes:
+      - postgres-trail-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: hunter2
+    image: docker.io/alikov/postgres96:trail
+    command:
+      - "-c"
+      - "shared_buffers=1GB"
+      - "-c"
+      - "effective_cache_size=2GB"
+
+volumes:
+  postgres-trail-data:
