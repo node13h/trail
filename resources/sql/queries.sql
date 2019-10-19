@@ -7,7 +7,7 @@ FROM leases
 (let [{:keys [ip mac from-date to-date]} params]
   (-> (cond-> []
         (some? ip) (conj "ip = :ip::inet")
-        (some? mac) (conj "mac = :mac::macaddr")
+        (some? mac) (conj "mac = :mac")
         (some? from-date) (conj "\"end-date\" >= :from-date")
         (some? to-date) (conj "\"start-date\" <= :to-date"))
       seq
@@ -24,9 +24,9 @@ FROM leases
 -- :name add-or-update-lease! :<! :1
 -- :doc Add a lease to the store
 INSERT INTO leases (ip, mac, "start-date", "end-date", data)
-VALUES (:ip::inet, :mac::macaddr, :start-date, :start-date::timestamp with time zone + make_interval(secs => :duration), :data)
+VALUES (:ip::inet, :mac, :start-date, :start-date::timestamp with time zone + make_interval(secs => :duration), :data)
 ON CONFLICT ON CONSTRAINT "ip-start-date" DO UPDATE
-   SET (mac, "end-date", data) = (:mac::macaddr, :start-date::timestamp with time zone + make_interval(secs => :duration), :data)
+   SET (mac, "end-date", data) = (:mac, :start-date::timestamp with time zone + make_interval(secs => :duration), :data)
 RETURNING id
 
 -- :name truncate-lease! :<! :*
