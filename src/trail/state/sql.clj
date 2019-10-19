@@ -28,7 +28,6 @@
           value (.getValue pgobj)]
       (case type
         "inet" (str value)
-        "macaddr" (str value)
         "jsonb" (parse-string value true)
         value))))
 
