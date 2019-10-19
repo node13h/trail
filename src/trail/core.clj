@@ -1,12 +1,17 @@
 (ns trail.core
-  (:require [ring.adapter.jetty :as jetty]
-            [trail.handler :as handler]
+  (:require [trail.handler :as handler]
             [mount.core :as mount]
             [trail.cli :as tc]
             [migratus.core :as m]
             [trail.config :refer [settings]]
             [taoensso.timbre :as timbre])
   (:gen-class))
+
+;; Mute messages like:
+;; DEBUG [org.eclipse.jetty.util.log:181] - Logging to com.github.fzakaria.slf4j.timbre.TimbreLoggerAdapter@55f05a73 via org.eclipse.jetty.util.log.Slf4jLog
+;; INFO [org.eclipse.jetty.util.log:193] - Logging initialized @18604ms to org.eclipse.jetty.util.log.Slf4jLog
+(timbre/set-level! :warn)
+(require '[ring.adapter.jetty :as jetty])
 
 (defn run-jetty
   "Start Jetty"
