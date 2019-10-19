@@ -124,4 +124,4 @@
   "Delete objects ending before the end-date"
   [params]
   (with-transaction
-    ((juxt trim-releases! trim-leases!) params)))
+    ((juxt trim-leases! trim-releases!) params)))
