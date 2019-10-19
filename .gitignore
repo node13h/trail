@@ -1,9 +1,5 @@
 # -*- mode: gitignore; -*-
 
-stack.state
-ci/concourse/credentials.yaml
-app.address
-
 *~
 \#*\#
 /.emacs.desktop
@@ -64,3 +60,10 @@ pom.xml.asc
 .lein-plugins/
 .lein-failures
 .nrepl-port
+
+# Python
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+Pipfile.lock
