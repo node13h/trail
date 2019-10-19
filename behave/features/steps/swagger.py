@@ -1,11 +1,11 @@
 from urllib.parse import urljoin
 import json
 
-from behave import given, then
+from behave import when, then
 import requests
 
 
-@given('a user makes a request to get "{uri}"')
+@when('a user makes a request to get "{uri}"')
 def step_impl(context, uri):
     base_url = context.config.userdata.get('app_base_url')
     url = urljoin(base_url, uri)
