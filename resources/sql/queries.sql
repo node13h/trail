@@ -25,7 +25,7 @@ FROM leases
 -- :doc Add a lease to the store
 INSERT INTO leases (ip, mac, "start-date", "end-date", data)
 VALUES (:ip::inet, :mac, :start-date, :start-date::timestamp with time zone + make_interval(secs => :duration), :data)
-ON CONFLICT ON CONSTRAINT "ip-start-date" DO UPDATE
+ON CONFLICT ON CONSTRAINT "leases_ip-start-date" DO UPDATE
    SET (mac, "end-date", data) = (:mac, :start-date::timestamp with time zone + make_interval(secs => :duration), :data)
 RETURNING id
 
