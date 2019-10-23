@@ -4,7 +4,9 @@ STATE_FILE := stack.state
 ADDRESS_FILE := app.address
 APP_INSTANCE_URL = http://localhost:3000
 
-.PHONY: test autotest clean uberjar build-image push-image wait-for-http compose-up compose-down compose-ps
+export RELEASE_REMOTE := origin
+
+.PHONY: test autotest clean uberjar build-image push-image wait-for-http compose-up compose-down compose-ps release-start release-finish
 
 test:
 	lein midje
@@ -14,6 +16,15 @@ autotest:
 
 clean:
 	lein clean
+
+mrproper: clean
+	-pipenv --rm
+
+develop:
+	pipenv sync --dev
+
+update-deps:
+	pipenv update
 
 target/server.jar:
 	lein uberjar
@@ -41,3 +52,8 @@ compose-down:
 compose-ps:
 	docker-compose ps
 
+release-start: test
+	pipenv run lase --version-file resources/VERSION $${RELEASE_REMOTE:+--remote "$${RELEASE_REMOTE}"} start $${RELEASE_VERSION:+--version "$${RELEASE_VERSION}"}
+
+release-finish: test
+	pipenv run lase --version-file resources/VERSION $${RELEASE_REMOTE:+--remote "$${RELEASE_REMOTE}"} finish

@@ -1,4 +1,4 @@
-(defproject trail "2.1.1-SNAPSHOT"
+(defproject trail (clojure.string/trim-newline (slurp "VERSION"))
   :description "IP history management API"
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [metosin/compojure-api "1.1.12"]

@@ -66,4 +66,3 @@ pom.xml.asc
 __pycache__/
 *.py[cod]
 *.egg-info/
-Pipfile.lock
