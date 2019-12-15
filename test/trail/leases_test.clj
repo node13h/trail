@@ -60,10 +60,6 @@
        (fact "returns number of seconds between two dates"
              (tl/interval-seconds (date-time 2000 1 1 0 0 0) (date-time 2000 1 1 4 15 28)) => 15328))
 
-(facts "about `duration-span`"
-       (fact "returns number of seconds between lease1 start and lease2 end"
-             (tl/duration-span a-lease b-lease) => 34488406))
-
 (facts "about `sorted`"
        (fact "empty input returns empty list"
              (tl/sorted []) => (list))
@@ -139,3 +135,277 @@
                (tl/same-lease? lease1 lease4) => falsey)
          (fact "different start dates do matter"
                (tl/same-lease? lease1 lease5) => falsey)))
+
+(facts "about `same-ip?`"
+       (let [lease1 {:ip "192.168.0.1"
+                     :mac "aa:aa:aa:aa:aa:aa"
+                     :start-date (date-time 2000 1 1 0 0 0)
+                     :duration 100
+                     :data {:key "val"}}
+             lease2 {:ip "192.168.0.1"
+                     :mac "bb:bb:bb:bb:bb:bb"
+                     :start-date (date-time 2000 1 1 0 1 0)
+                     :duration 99
+                     :data {:key2 "val2"}}
+             lease3 {:ip "192.168.0.2"
+                     :mac "aa:aa:aa:aa:aa:aa"
+                     :start-date (date-time 2000 1 1 0 0 0)
+                     :duration 100
+                     :data {:key "val"}}]
+         (fact "same IP addresses return true"
+               (tl/same-ip? lease1 lease2) => truthy)
+         (fact "different IP addresses return false"
+               (tl/same-ip? lease1 lease3) => falsey)))
+
+(facts "about `same-mac?`"
+       (let [lease1 {:ip "192.168.0.1"
+                     :mac "aa:aa:aa:aa:aa:aa"
+                     :start-date (date-time 2000 1 1 0 0 0)
+                     :duration 100
+                     :data {:key "val"}}
+             lease2 {:ip "192.168.0.2"
+                     :mac "aa:aa:aa:aa:aa:aa"
+                     :start-date (date-time 2000 1 1 0 1 0)
+                     :duration 99
+                     :data {:key2 "val2"}}
+             lease3 {:ip "192.168.0.1"
+                     :mac "bb:bb:bb:bb:bb:bb"
+                     :start-date (date-time 2000 1 1 0 0 0)
+                     :duration 100
+                     :data {:key "val"}}]
+         (fact "same MAC addresses return true"
+               (tl/same-mac? lease1 lease2) => truthy)
+         (fact "different MAC addresses return false"
+               (tl/same-mac? lease1 lease3) => falsey)))
+
+(facts "about `active?`"
+       (let [lease {:ip "192.168.0.1"
+                     :mac "aa:aa:aa:aa:aa:aa"
+                     :start-date (date-time 2000 1 1 0 1 0)
+                     :duration 60
+                     :data {:key "val"}}]
+         (fact "within range returns true"
+               (tl/active? (date-time 2000 1 1 0 0 0) (date-time 2000 1 1 0 2 0) lease) => truthy)
+         (fact "outside range returns false"
+               (tl/active? (date-time 2000 1 1 0 0 0) (date-time 2000 1 1 0 0 59) lease) => falsey)
+         (fact "ending at range start returns true"
+               (tl/active? (date-time 2000 1 1 0 2 0) (date-time 2000 1 1 0 3 0) lease) => truthy)
+         (fact "starting at range end returns true"
+               (tl/active? (date-time 2000 1 1 0 0 0) (date-time 2000 1 1 0 1 0) lease) => truthy)))
+
+(facts "about `no-gap?`"
+       (let [lease1 {:ip "192.168.0.1"
+                     :mac "aa:aa:aa:aa:aa:aa"
+                     :start-date (date-time 2000 1 1 0 1 0)
+                     :duration 60
+                     :data {:key "val"}}
+             lease2 {:ip "192.168.0.2"
+                     :mac "aa:aa:aa:aa:aa:aa"
+                     :start-date (date-time 2000 1 1 0 2 0)
+                     :duration 60
+                     :data {:key "val"}}
+             lease3 {:ip "192.168.0.1"
+                     :mac "bb:bb:bb:bb:bb:bb"
+                     :start-date (date-time 2000 1 1 0 2 30)
+                     :duration 60
+                     :data {:key "val"}}
+             lease4 {:ip "192.168.0.2"
+                     :mac "bb:bb:bb:bb:bb:bb"
+                     :start-date (date-time 2000 1 1 0 0 0)
+                     :duration 240
+                     :data {:key "val"}}]
+         (fact "adjacent return true"
+               (tl/no-gap? lease1 lease2) => truthy)
+         (fact "reverse adjacent return true"
+               (tl/no-gap? lease2 lease1) => truthy)
+         (fact "overlapping return true"
+               (tl/no-gap? lease2 lease3) => truthy)
+         (fact "reverse overlapping return true"
+               (tl/no-gap? lease3 lease2) => truthy)
+         (fact "disjoint return false"
+               (tl/no-gap? lease1 lease3) => falsey)
+         (fact "reverse disjoint return false"
+               (tl/no-gap? lease3 lease1) => falsey)
+         (fact "contained returns true"
+               (tl/no-gap? lease1 lease4) => truthy)
+         (fact "reverse contained returns true"
+               (tl/no-gap? lease4 lease1) => truthy)))
+
+(facts "about `union`"
+       (let [lease1 {:ip "192.168.0.1"
+                     :mac "aa:aa:aa:aa:aa:aa"
+                     :start-date (date-time 2000 1 1 0 1 0)
+                     :duration 60
+                     :data {:key1 "val1"}}
+             lease2 {:ip "192.168.0.1"
+                     :mac "aa:aa:aa:aa:aa:aa"
+                     :start-date (date-time 2000 1 1 0 2 0)
+                     :duration 60
+                     :data {:key2 "val2"}}
+             lease3 {:ip "192.168.0.1"
+                     :mac "aa:aa:aa:aa:aa:aa"
+                     :start-date (date-time 2000 1 1 0 2 30)
+                     :duration 60
+                     :data {:key3 "val3"}}
+             lease4 {:ip "192.168.0.1"
+                     :mac "aa:aa:aa:aa:aa:aa"
+                     :start-date (date-time 2000 1 1 0 0 0)
+                     :duration 240
+                     :data {:key4 "val4"}}
+             lease5 {:ip "192.168.0.2"
+                     :mac "aa:aa:aa:aa:aa:aa"
+                     :start-date (date-time 2000 1 1 0 2 0)
+                     :duration 60
+                     :data {:key5 "val5"}}
+             lease6 {:ip "192.168.0.1"
+                     :mac "bb:bb:bb:bb:bb:bb"
+                     :start-date (date-time 2000 1 1 0 2 0)
+                     :duration 60
+                     :data {:key6 "val6"}}]
+         (fact "adjacent are merged with metadata from a more recent lease"
+               (tl/union lease1 lease2) => [{:ip "192.168.0.1"
+                                             :mac "aa:aa:aa:aa:aa:aa"
+                                             :start-date (date-time 2000 1 1 0 1 0)
+                                             :duration 120
+                                             :data {:key2 "val2"}}])
+         (fact "reverse adjacent are merged with metadata a more recent lease"
+               (tl/union lease2 lease1) => [{:ip "192.168.0.1"
+                                             :mac "aa:aa:aa:aa:aa:aa"
+                                             :start-date (date-time 2000 1 1 0 1 0)
+                                             :duration 120
+                                             :data {:key2 "val2"}}])
+         (fact "overlapping are merged with metadata from a more recent lease"
+               (tl/union lease2 lease3) => [{:ip "192.168.0.1"
+                                             :mac "aa:aa:aa:aa:aa:aa"
+                                             :start-date (date-time 2000 1 1 0 2 0)
+                                             :duration 90
+                                             :data {:key3 "val3"}}])
+         (fact "reverse overlapping are merged with metadata from a more recent lease"
+               (tl/union lease3 lease2) => [{:ip "192.168.0.1"
+                                             :mac "aa:aa:aa:aa:aa:aa"
+                                             :start-date (date-time 2000 1 1 0 2 0)
+                                             :duration 90
+                                             :data {:key3 "val3"}}])
+         (fact "disjoint are not merged"
+               (tl/union lease1 lease3) => [lease1 lease3])
+         (fact "reverse disjoint are not merged"
+               (tl/union lease3 lease1) => [lease3 lease1])
+         (fact "contained are merged with metadata from a more recent lease"
+               (tl/union lease1 lease4) => [{:ip "192.168.0.1"
+                                             :mac "aa:aa:aa:aa:aa:aa"
+                                             :start-date (date-time 2000 1 1 0 0 0)
+                                             :duration 240
+                                             :data {:key4 "val4"}}])
+         (fact "reverse contained are merged with metadata from a more recent lease"
+               (tl/union lease4 lease1) => [{:ip "192.168.0.1"
+                                             :mac "aa:aa:aa:aa:aa:aa"
+                                             :start-date (date-time 2000 1 1 0 0 0)
+                                             :duration 240
+                                             :data {:key4 "val4"}}])
+         (fact "adjacent with different IP addresses are not merged"
+               (tl/union lease1 lease5) => [{:ip "192.168.0.1"
+                                             :mac "aa:aa:aa:aa:aa:aa"
+                                             :start-date (date-time 2000 1 1 0 1 0)
+                                             :duration 60
+                                             :data {:key1 "val1"}}
+                                            {:ip "192.168.0.2"
+                                             :mac "aa:aa:aa:aa:aa:aa"
+                                             :start-date (date-time 2000 1 1 0 2 0)
+                                             :duration 60
+                                             :data {:key5 "val5"}}])
+         (fact "adjacent with different MAC addresses are not merged"
+               (tl/union lease1 lease6) => [{:ip "192.168.0.1"
+                                             :mac "aa:aa:aa:aa:aa:aa"
+                                             :start-date (date-time 2000 1 1 0 1 0)
+                                             :duration 60
+                                             :data {:key1 "val1"}}
+                                            {:ip "192.168.0.1"
+                                             :mac "bb:bb:bb:bb:bb:bb"
+                                             :start-date (date-time 2000 1 1 0 2 0)
+                                             :duration 60
+                                             :data {:key6 "val6"}}])))
+
+(facts "about `append`"
+       (fact "can append to an empty vector"
+             (tl/append #([(+ %1 %2)]) [] 1) => [1])
+       (fact "can append to an empty list"
+             (tl/append #([(+ %1 %2)]) (list) 1) => (list 1))
+       (fact "can append to an existing vector"
+             (tl/append #(if (odd? %1) [(+ %1 %2)] [%2 %1]) [1 2 3] 1) => [1 2 4]
+             (tl/append #(if (odd? %1) [(+ %1 %2)] [%2 %1]) [1 2 4] 1) => [1 2 1 4])
+       (fact "can append to an existing list"
+             (tl/append #(if (odd? %1) [(+ %1 %2)] [%2 %1]) (list 1 2 3) 1) => (list 2 2 3)
+             (tl/append #(if (odd? %1) [(+ %1 %2)] [%2 %1]) (list 2 3 4) 1) => (list 2 1 3 4)))
+
+(facts "about `fused`"
+       (let [coll [{:ip "192.168.0.1"
+                    :mac "aa:aa:aa:aa:aa:aa"
+                    :start-date (date-time 2000 1 1 0 0 0)
+                    :duration 120
+                    :data {:key1 "val1"}}
+                   {:ip "192.168.0.1"
+                    :mac "aa:aa:aa:aa:aa:aa"
+                    :start-date (date-time 2000 1 1 0 1 0)
+                    :duration 60
+                    :data {:key2 "val2"}}
+                   {:ip "192.168.0.1"
+                    :mac "aa:aa:aa:aa:aa:aa"
+                    :start-date (date-time 2000 1 1 0 1 30)
+                    :duration 60
+                    :data {:key3 "val3"}}
+                   {:ip "192.168.0.1"
+                    :mac "aa:aa:aa:aa:aa:aa"
+                    :start-date (date-time 2000 1 1 0 2 59)
+                    :duration 60
+                    :data {:key4 "val4"}}
+                   {:ip "192.168.0.1"
+                    :mac "aa:aa:aa:aa:aa:aa"
+                    :start-date (date-time 2000 1 1 0 3 00)
+                    :duration 100
+                    :data {:key5 "val5"}}
+                   {:ip "192.168.0.1"
+                    :mac "aa:aa:aa:aa:aa:aa"
+                    :start-date (date-time 2000 1 1 0 5 00)
+                    :duration 60
+                    :data {:key6 "val6"}}
+                   {:ip "192.168.0.2"
+                    :mac "bb:bb:bb:bb:bb:bb"
+                    :start-date (date-time 2000 1 1 0 0 0)
+                    :duration 90
+                    :data {:key1 "val1"}}
+                   {:ip "192.168.0.2"
+                    :mac "bb:bb:bb:bb:bb:bb"
+                    :start-date (date-time 2000 1 1 0 0 0)
+                    :duration 100
+                    :data {:key2 "val2"}}
+                   {:ip "192.168.0.3"
+                    :mac "aa:aa:aa:aa:aa:aa"
+                    :start-date (date-time 2000 1 1 0 10 0)
+                    :duration 60
+                    :data {:key1 "val1"}}]]
+         (fact "overlapping leases are fused together"
+               (tl/fused coll) => [{:ip "192.168.0.1"
+                                    :mac "aa:aa:aa:aa:aa:aa"
+                                    :start-date (date-time 2000 1 1 0 0 0)
+                                    :duration 150
+                                    :data {:key3 "val3"}}
+                                   {:ip "192.168.0.1"
+                                    :mac "aa:aa:aa:aa:aa:aa"
+                                    :start-date (date-time 2000 1 1 0 2 59)
+                                    :duration 101
+                                    :data {:key5 "val5"}}
+                                   {:ip "192.168.0.1"
+                                    :mac "aa:aa:aa:aa:aa:aa"
+                                    :start-date (date-time 2000 1 1 0 5 00)
+                                    :duration 60
+                                    :data {:key6 "val6"}}
+                                   {:ip "192.168.0.2"
+                                    :mac "bb:bb:bb:bb:bb:bb"
+                                    :start-date (date-time 2000 1 1 0 0 0)
+                                    :duration 100
+                                    :data {:key2 "val2"}}
+                                   {:ip "192.168.0.3"
+                                    :mac "aa:aa:aa:aa:aa:aa"
+                                    :start-date (date-time 2000 1 1 0 10 0)
+                                    :duration 60
+                                    :data {:key1 "val1"}}])))

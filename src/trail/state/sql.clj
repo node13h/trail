@@ -92,13 +92,7 @@
                         :lock true}
                        selection)
           sorted-all (tl/sorted (conj adjacent lease))
-          first-lease (first sorted-all)
-          last-lease (last sorted-all)
-          merged-lease {:ip (:ip first-lease)
-                        :mac (:mac first-lease)
-                        :start-date (:start-date first-lease)
-                        :duration (tl/duration-span first-lease last-lease)
-                        :data (:data first-lease)}
+          merged-lease (peek (tl/fused sorted-all))  ;; All leases in the source coll overlap, so there should be only one result
           inserted-id (-> merged-lease
                           add-or-update-lease!
                           :id)

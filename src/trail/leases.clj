@@ -17,15 +17,15 @@
   [dt1 dt2]
   (t/in-seconds (t/interval dt1 dt2)))
 
-(defn seconds-between
-  "Calculate interval between two leases in seconds"
+(defn same-ip?
+  "Return true if both leases have the same IP address"
   [lease1 lease2]
-  (interval-seconds (:start-date lease1) (:start-date lease2)))
+  (= (:ip lease1) (:ip lease2)))
 
-(defn duration-span
-  "Return combined duration in seconds"
+(defn same-mac?
+  "Return true if both leases have the smae MAC address"
   [lease1 lease2]
-  (+ (seconds-between lease1 lease2) (:duration lease2)))
+  (= (:mac lease1) (:mac lease2)))
 
 (defn sorted
   "Return a sequence of leases sorted by IP and start-date"
@@ -52,4 +52,42 @@
   [lease1 lease2]
   (and
    (t/equal? (:start-date lease1) (:start-date lease2))
-   (= (:ip lease1) (:ip lease2))))
+   (same-ip? lease1 lease2)))
+
+(defn active?
+  "Return true if the lease was active during the specified date range"
+  [from-date to-date lease]
+  (let [start-date (:start-date lease)
+        end-date (end-date lease)]
+    (and (or (t/before? start-date to-date) (t/equal? start-date to-date))
+         (or (t/after? end-date from-date) (t/equal? end-date from-date)))))
+
+(defn no-gap?
+  "Return true if there is no gap between two leases"
+  [lease1 lease2]
+  (active? (:start-date lease1) (end-date lease1) lease2))
+
+(defn union
+  "Merge if leases overlap, otherwise return as-is. Metadata is taken from lease2"
+  [lease1 lease2]
+  (if (every? true? ((juxt same-mac? same-ip? no-gap?) lease1 lease2))
+    (let [lease (if (t/after? (end-date lease1) (end-date lease2)) lease1 lease2)
+          earliest (t/earliest (:start-date lease1) (:start-date lease2))
+          latest (t/latest (end-date lease1) (end-date lease2))
+          duration (interval-seconds earliest latest)]
+      [(assoc lease :start-date earliest :duration duration)])
+      [lease1 lease2]))
+
+(defn append
+  "Replace head of the collection with the items returned by (f head val)"
+  [f coll val]
+  (if (seq coll)
+    (into (pop coll) (f (peek coll) val))
+    (conj coll val)))
+
+(defn fused
+  "Aggregate overlapping leases"
+  [sorted-coll]
+  (if (seq sorted-coll)
+    (reduce (partial append union) (conj (empty sorted-coll) (first sorted-coll)) (rest sorted-coll))
+    sorted-coll))
