@@ -40,7 +40,7 @@
                    status => 200
                    result => []))
 
-        (fact "can adds new leases"
+        (fact "can add new leases"
               (let [leases [{:data {}
                              :duration 100
                              :ip "192.168.0.2"
@@ -374,6 +374,77 @@
                                        :ip "192.168.0.9"
                                        :mac "bb:bb:bb:bb:bb:bb"
                                        :start-date "2000-01-01 00:02:00"}]))
+        (fact "adding same lease with longer duration updates the duration of the original lease"
+              (let [leases [{:data {}
+                             :duration 180
+                             :ip "192.168.0.12"
+                             :mac "12:12:12:12:12:12"
+                             :start-date "2000-01-01 00:00:00"}]]
+                (req (post "/api/v3/leases" leases) th/app "UTC"
+                     status => 200))
+              (let [leases [{:data {}
+                             :duration 200
+                             :ip "192.168.0.12"
+                             :mac "12:12:12:12:12:12"
+                             :start-date "2000-01-01 00:00:00"}]]
+                (req (post "/api/v3/leases" leases) th/app "UTC"
+                     status => 200))
+              (req (get "/api/v3/leases?ip=192.168.0.12&from-date=2000-01-01%2000:00:00&to-date=2000-01-01%2001:00:00") th/app "UTC"
+                   status => 200
+                   (no-ids result) => [{:data {}
+                                        :duration 200
+                                        :ip "192.168.0.12"
+                                        :mac "12:12:12:12:12:12"
+                                        :start-date "2000-01-01 00:00:00"}]))
+        (fact "longer lease swallows a shorter one"
+              (let [leases [{:data {}
+                             :duration 60
+                             :ip "192.168.0.13"
+                             :mac "13:13:13:13:13:13"
+                             :start-date "2000-01-01 00:01:00"}]]
+                (req (post "/api/v3/leases" leases) th/app "UTC"
+                     status => 200))
+              (let [leases [{:data {}
+                             :duration 180
+                             :ip "192.168.0.13"
+                             :mac "13:13:13:13:13:13"
+                             :start-date "2000-01-01 00:00:00"}]]
+                (req (post "/api/v3/leases" leases) th/app "UTC"
+                     status => 200))
+              (req (get "/api/v3/leases?ip=192.168.0.13&from-date=2000-01-01%2000:00:00&to-date=2000-01-01%2001:00:00") th/app "UTC"
+                   status => 200
+                   (no-ids result) => [{:data {}
+                                        :duration 180
+                                        :ip "192.168.0.13"
+                                        :mac "13:13:13:13:13:13"
+                                        :start-date "2000-01-01 00:00:00"}]))
+        (fact "longer lease in the middle of two existing short ones merges with the first and swallows the second"
+              (let [leases [{:data {}
+                             :duration 60
+                             :ip "192.168.0.14"
+                             :mac "14:14:14:14:14:14"
+                             :start-date "2000-01-01 00:00:00"}
+                            {:data {}
+                             :duration 60
+                             :ip "192.168.0.14"
+                             :mac "14:14:14:14:14:14"
+                             :start-date "2000-01-01 00:02:00"}]]
+                (req (post "/api/v3/leases" leases) th/app "UTC"
+                     status => 200))
+              (let [leases [{:data {}
+                             :duration 190
+                             :ip "192.168.0.14"
+                             :mac "14:14:14:14:14:14"
+                             :start-date "2000-01-01 00:00:50"}]]
+                (req (post "/api/v3/leases" leases) th/app "UTC"
+                     status => 200))
+              (req (get "/api/v3/leases?ip=192.168.0.14&from-date=2000-01-01%2000:00:00&to-date=2000-01-01%2001:00:00") th/app "UTC"
+                   status => 200
+                   (no-ids result) => [{:data {}
+                                        :duration 240
+                                        :ip "192.168.0.14"
+                                        :mac "14:14:14:14:14:14"
+                                        :start-date "2000-01-01 00:00:00"}]))
         (fact "can trim all leases"
               (req (delete "/api/v3/leases" {:to-date "2020-01-01 00:02:40"}) th/app "UTC"
                    status => 200)
