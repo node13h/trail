@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk-alpine3.9
+FROM openjdk:11-jre-slim
 COPY target/server.jar /app/
 WORKDIR /app
 ENTRYPOINT ["java", "-jar", "server.jar"]

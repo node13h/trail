@@ -5,11 +5,18 @@ verify_ssl = true
 
 [dev-packages]
 lase = "~=0.3.0"
+beautifulsoup4 = "~=4.9"
+behave = "~=1.2"
+requests = "~=2.23"
+flake8 = "~=3.8"
+jedi = "~=0.17.0"
+autopep8 = "~=1.5"
+
 
 [packages]
 
 [requires]
-python_version = "3.7"
+python_version = "3.8"
 
 [pipenv]
 allow_prereleases = false
