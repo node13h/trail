@@ -15,16 +15,13 @@ services:
       - "-c"
       - |
         set -eu
-        until nc -z postgres 5432; do
-          echo Wait for DB
+        until java -jar server.jar migrate; do
           sleep 1
         done
         cd /app
-        java -jar server.jar migrate
         java -jar server.jar start
     restart: on-failure
   postgres:
-    shm_size: "2gb"
     volumes:
       - postgres-trail-data:/var/lib/postgresql/data
     environment:
