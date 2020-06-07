@@ -20,6 +20,7 @@
 
 (def dt-keys #{:from-date :to-date :start-date :end-date})
 (def uuid-keys #{:id})
+(def ip-keys #{:ip})
 
 (defn kv-parser
   "Parse values"
@@ -27,6 +28,7 @@
   (cond
     (and (some? v) (contains? dt-keys k)) (parsed-dt v tz)
     (and (some? v) (contains? uuid-keys k)) (java.util.UUID/fromString v)
+    (and (some? v) (contains? ip-keys k)) (java.net.InetAddress/getByName v)
     :else v))
 
 (defn kv-formatter
@@ -35,6 +37,7 @@
   (cond
     (and (some? v) (contains? dt-keys k)) (formatted-dt v tz)
     (and (some? v) (contains? uuid-keys k)) (str v)
+    (and (some? v) (contains? ip-keys k)) (.getHostAddress v)
     :else v))
 
 (defn parsed-map

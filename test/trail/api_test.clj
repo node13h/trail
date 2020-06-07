@@ -1,7 +1,8 @@
 (ns trail.api-test
   (:require [midje.sweet :refer :all]
             [clj-time.core :as t]
-            [trail.api.core :as tac]))
+            [trail.api.core :as tac]
+            [trail.fixtures :refer [ip]]))
 
 (def utc-tz (t/time-zone-for-id "UTC"))
 (def vilnius-tz (t/time-zone-for-id "Europe/Vilnius"))
@@ -10,7 +11,7 @@
 (def utc-dt (t/from-time-zone (t/date-time 2000 01 01 20 1 15) utc-tz))
 (def vilnius-dt (t/to-time-zone utc-dt vilnius-tz))
 (def a1
-  {:ip "192.168.0.2"
+  {:ip (ip "192.168.0.2")
    :mac "aa:aa:aa:aa:aa:aa"
    :start-date utc-dt
    :duration 100
@@ -18,14 +19,14 @@
 
 ;; Equivalent to a1, but with Europe/Vilnius time zone set for dt
 (def vilnius-a1
-  {:ip "192.168.0.2"
+  {:ip (ip "192.168.0.2")
    :mac "aa:aa:aa:aa:aa:aa"
    :start-date vilnius-dt
    :duration 100
    :data {}})
 
 (def b1
-  {:ip "192.168.0.3"
+  {:ip (ip "192.168.0.3")
    :mac "bb:bb:bb:bb:bb:bb"
    :start-date utc-dt
    :duration 100
@@ -33,7 +34,7 @@
 
 ;; Equivalent to b1, but with Europe/Vilnius time zone set for dt
 (def vilnius-b1
-  {:ip "192.168.0.3"
+  {:ip (ip "192.168.0.3")
    :mac "bb:bb:bb:bb:bb:bb"
    :start-date vilnius-dt
    :duration 100
