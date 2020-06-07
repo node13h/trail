@@ -3,7 +3,7 @@ DOCKER_REPOSITORY := docker.io/alikov/trail
 
 E2E_APP_PORT = 3001
 E2E_PG_PORT = 5433
-E2E_NS = trail-e2e-supporting-services
+E2E_NS = trail-e2e
 
 export RELEASE_REMOTE := origin
 

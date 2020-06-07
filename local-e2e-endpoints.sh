@@ -34,7 +34,7 @@ start () {
 
     pg_image=$(podman build -q development/postgres)
 
-    podman run --pod "$POD" -d \
+    podman run --pod "$POD" -d --name "${POD}-pg" \
            -e POSTGRES_PASSWORD=hunter2 \
            "${pg_image:0:12}"
 
@@ -49,17 +49,15 @@ start () {
 
     podman run --pod "$POD" --rm \
            -e DATABASE_URL=postgres://postgres:hunter2@localhost/postgres \
-           "$app_image" \
-           migrate
+           "$app_image" migrate
 
-    podman run --rm --network host --entrypoint pg_dump \
+    podman run --pod "$POD" --rm --entrypoint pg_dump \
            -e PGPASSWORD=hunter2 \
-           "$pg_image" -h 127.0.0.1 -p "$PG_PORT" -U postgres -c postgres > "$RESET_SQL_FILE"
+           "$pg_image" -h 127.0.0.1 -U postgres -c postgres > "$RESET_SQL_FILE"
 
-    podman run --pod "$POD" -d \
+    podman run --pod "$POD" -d --name "$POD-app" \
            -e DATABASE_URL=postgres://postgres:hunter2@localhost/postgres \
-           "$app_image" \
-           start
+           "$app_image" start
 
     until curl -Lfs --output /dev/null http://localhost:"$APP_PORT"; do
         echo Wait for app
