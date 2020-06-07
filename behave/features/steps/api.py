@@ -38,11 +38,12 @@ def step_impl(context):  # noqa: F811
 @given('the database is reset to an empty state')
 def step_impl(context):  # noqa: F811
     reset_script = context.config.userdata.get('reset_script')
+    reset_sql = context.config.userdata.get('reset_sql')
     pg_address = context.config.userdata.get('pg_address')
     pg_port = context.config.userdata.get('pg_port')
     pg_password = context.config.userdata.get('pg_password')
 
-    run([reset_script, pg_address, pg_port, pg_password], check=True)
+    run([reset_script, reset_sql, pg_address, pg_port, pg_password], check=True)
 
 
 @when('no leases are added')

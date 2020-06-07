@@ -10,13 +10,13 @@ export RELEASE_REMOTE := origin
 .PHONY: test autotest clean uberjar build-image push-image wait-for-http compose-up compose-down compose-ps release-start release-finish e2e-test e2e-endpoints-up e2e-endpoints-down
 
 e2e-endpoints-up: target/server.jar
-	./local-e2e-endpoints.sh start behave/endpoints behave/reset.sql $(E2E_APP_PORT) $(E2E_PG_PORT) $(E2E_NS)
+	./local-e2e-endpoints.sh start behave/$(E2E_NS)-endpoints behave/$(E2E_NS)-reset.sql $(E2E_APP_PORT) $(E2E_PG_PORT) $(E2E_NS)
 
 e2e-endpoints-down:
-	./local-e2e-endpoints.sh stop behave/endpoints behave/reset.sql $(E2E_APP_PORT) $(E2E_PG_PORT) $(E2E_NS)
+	./local-e2e-endpoints.sh stop behave/$(E2E_NS)-endpoints behave/$(E2E_NS)-reset.sql $(E2E_APP_PORT) $(E2E_PG_PORT) $(E2E_NS)
 
 e2e-test:
-	cd behave && ./run-tests.sh
+	cd behave && ./run-tests.sh $(E2E_NS)
 
 test:
 	lein midje
