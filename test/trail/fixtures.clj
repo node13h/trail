@@ -1,10 +1,15 @@
 (ns trail.fixtures
   (:require [clj-time.core :as t]))
 
+(defn ip
+  [address]
+  (java.net.InetAddress/getByName address)
+)
+
 (defn leasegen
   [n]
   (for [x (range n)]
-    {:ip "192.168.0.4"
+    {:ip (ip "192.168.0.4")
      :mac "cc:cc:cc:cc:cc:cc"
      :start-date (t/plus (t/date-time 2000 1 1 0 0 0) (t/seconds x))
      :duration 100
@@ -26,7 +31,7 @@
 
 ;; A lease
 (def a1
-  {:ip "192.168.0.2"
+  {:ip (ip "192.168.0.2")
    :mac "aa:aa:aa:aa:aa:aa"
    :start-date start-a1
    :duration 100
@@ -34,7 +39,7 @@
 
 ;; A lease truncated to during-a1-and-a2
 (def a1-truncated
-  {:ip "192.168.0.2"
+  {:ip (ip "192.168.0.2")
    :mac "aa:aa:aa:aa:aa:aa"
    :start-date start-a1
    :duration 60
@@ -42,7 +47,7 @@
 
 ;; Overlapping continuation of the a1
 (def a2
-  {:ip "192.168.0.2"
+  {:ip (ip "192.168.0.2")
    :mac "aa:aa:aa:aa:aa:aa"
    :start-date during-a1
    :duration 100
@@ -50,7 +55,7 @@
 
 ;; a2 truncated to during-a1-and-a2
 (def a2-truncated
-  {:ip "192.168.0.2"
+  {:ip (ip "192.168.0.2")
    :mac "aa:aa:aa:aa:aa:aa"
    :start-date during-a1
    :duration 10
@@ -58,7 +63,7 @@
 
 ;; Adjacent continuation of the a2
 (def a3
-  {:ip "192.168.0.2"
+  {:ip (ip "192.168.0.2")
    :mac "aa:aa:aa:aa:aa:aa"
    :start-date just-after-a2
    :duration 100
@@ -66,7 +71,7 @@
 
 ;; a1, a2 and a3 combined
 (def a-aggregated
-  {:ip "192.168.0.2"
+  {:ip (ip "192.168.0.2")
    :mac "aa:aa:aa:aa:aa:aa"
    :start-date start-a1
    :duration 250
@@ -74,7 +79,7 @@
 
 ;; Same start date as a1, but different IP
 (def b1
-  {:ip "192.168.0.3"
+  {:ip (ip "192.168.0.3")
    :mac "bb:bb:bb:bb:bb:bb"
    :start-date start-a1
    :duration 100
@@ -82,7 +87,7 @@
 
 ;; Adjacent continuation of b1
 (def b2
-  {:ip "192.168.0.3"
+  {:ip (ip "192.168.0.3")
    :mac "bb:bb:bb:bb:bb:bb"
    :start-date start-b2
    :duration 100
@@ -90,7 +95,7 @@
 
 ;; Overlaps with c1
 (def b1-truncated
-  {:ip "192.168.0.3"
+  {:ip (ip "192.168.0.3")
    :mac "bb:bb:bb:bb:bb:bb"
    :start-date start-a1
    :duration 50
@@ -98,7 +103,7 @@
 
 ;; b1 and b2 combined
 (def b-aggregated
-  {:ip "192.168.0.3"
+  {:ip (ip "192.168.0.3")
    :mac "bb:bb:bb:bb:bb:bb"
    :start-date start-a1
    :duration 200
@@ -106,7 +111,7 @@
 
 ;; Overlaps with b1. See b1-truncated
 (def c1
-  {:ip "192.168.0.3"
+  {:ip (ip "192.168.0.3")
    :mac "cc:cc:cc:cc:cc:cc"
    :start-date during-b1
    :duration 100
@@ -114,7 +119,7 @@
 
 ;; Doesn't overlap with with b1. See b1-truncated
 (def c2
-  {:ip "192.168.0.3"
+  {:ip (ip "192.168.0.3")
    :mac "cc:cc:cc:cc:cc:cc"
    :start-date after-b1
    :duration 100
@@ -122,7 +127,7 @@
 
 ;; Updated version of the c1, MAC updates are also allowed
 (def c1-updated
-  {:ip "192.168.0.3"
+  {:ip (ip "192.168.0.3")
    :mac "000000000000"
    :start-date during-b1
    :duration 500

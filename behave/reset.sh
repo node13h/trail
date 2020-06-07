@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
-PG_ADDRESS="$1"
-PG_PORT="$2"
-PG_PASSWORD="$3"
-PG_IMAGE="${4:-postgres:9.6-alpine}"
+RESET_SQL="$1"
+PG_ADDRESS="$2"
+PG_PORT="$3"
+PG_PASSWORD="$4"
+PG_IMAGE="${5:-postgres:9.6-alpine}"
 
 podman run \
        -i \
@@ -16,4 +17,4 @@ podman run \
        -p "$PG_PORT" \
        -U postgres \
        postgres \
-       < reset.sql >/dev/null
+       < "$RESET_SQL" >/dev/null

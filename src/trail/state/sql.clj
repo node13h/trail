@@ -27,7 +27,7 @@
     (let [type  (.getType pgobj)
           value (.getValue pgobj)]
       (case type
-        "inet" (str value)
+        "inet" (java.net.InetAddress/getByName value)
         "jsonb" (parse-string value true)
         value))))
 
@@ -38,7 +38,9 @@
 
 (extend-protocol jdbc/ISQLValue
   IPersistentMap
-  (sql-value [value] (to-pg-json value)))
+  (sql-value [value] (to-pg-json value))
+  java.net.InetAddress
+  (sql-value [value] (.getHostAddress value)))
 
 (defn release!
   "Release a lease reconstructing the tail if necessary"

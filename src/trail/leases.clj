@@ -20,7 +20,7 @@
 (defn same-ip?
   "Return true if both leases have the same IP address"
   [lease1 lease2]
-  (= (:ip lease1) (:ip lease2)))
+  (.equals (:ip lease1) (:ip lease2)))
 
 (defn same-mac?
   "Return true if both leases have the smae MAC address"
@@ -30,7 +30,7 @@
 (defn sorted
   "Return a sequence of leases sorted by IP and start-date"
   [coll]
-  (sort-by (juxt :ip start-epoch) coll))
+  (sort-by (juxt #(.getHostAddress (:ip %)) start-epoch) coll))
 
 (defn truncated
   "Truncate a lease at the specified date"
