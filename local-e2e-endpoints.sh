@@ -12,6 +12,9 @@ PG_PORT="$5"
 
 POD="$6"
 
+PG_IMAGE='postgres:9.6-alpine'
+
+
 stop () {
     if podman pod exists "$POD"; then
         podman pod rm -f "$POD"
@@ -30,13 +33,9 @@ start () {
         podman pod start "$POD"
     fi
 
-    declare pg_image
-
-    pg_image=$(podman build -q development/postgres)
-
     podman run --pod "$POD" -d --name "${POD}-pg" \
            -e POSTGRES_PASSWORD=hunter2 \
-           "${pg_image:0:12}"
+           "$PG_IMAGE"
 
     until nc -z localhost "$PG_PORT"; do
         echo Wait for DB
@@ -53,7 +52,7 @@ start () {
 
     podman run --pod "$POD" --rm --entrypoint pg_dump \
            -e PGPASSWORD=hunter2 \
-           "$pg_image" -h 127.0.0.1 -U postgres -c postgres > "$RESET_SQL_FILE"
+           "$PG_IMAGE" -h 127.0.0.1 -U postgres -c postgres > "$RESET_SQL_FILE"
 
     podman run --pod "$POD" -d --name "$POD-app" \
            -e DATABASE_URL=postgres://postgres:hunter2@localhost/postgres \

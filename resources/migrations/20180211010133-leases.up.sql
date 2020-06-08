@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+--;;
 CREATE TABLE IF NOT EXISTS leases
 (
     id uuid NOT NULL DEFAULT uuid_generate_v1(),

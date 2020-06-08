@@ -1,1 +1,3 @@
-DROP TABLE IF EXISTS leases
+DROP TABLE IF EXISTS leases;
+--;;
+DROP EXTENSION IF EXISTS "uuid-ossp";
