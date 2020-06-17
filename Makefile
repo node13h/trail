@@ -16,7 +16,7 @@ e2e-endpoints-down:
 	./local-e2e-endpoints.sh stop behave/$(E2E_NS)-endpoints behave/$(E2E_NS)-reset.sql $(E2E_APP_PORT) $(E2E_PG_PORT) $(E2E_NS)
 
 e2e-test:
-	cd behave && ./run-tests.sh $(E2E_NS)
+	cd behave && pipenv run ./run-tests.sh $(E2E_NS)
 
 test:
 	lein midje

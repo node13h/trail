@@ -5,4 +5,4 @@
 (m/defstate settings
   :start {:port (Integer/parseInt (:port env "3000"))
           :database-url (:database-url env)
-          :max-date-range (Integer/parseInt (:max-date-range env "3600"))})
+          :max-http-results (Integer/parseInt (:max-http-results env "10000"))})

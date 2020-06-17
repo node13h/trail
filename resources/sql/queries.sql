@@ -18,6 +18,9 @@ FROM leases
                (join " "))))))
 ~*/
 /*~
+(when (some? (:limit params)) "LIMIT :limit")
+~*/
+/*~
 (when (true? (:lock params)) "FOR UPDATE")
 ~*/
 
