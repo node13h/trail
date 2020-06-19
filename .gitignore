@@ -1,7 +1,6 @@
 # -*- mode: gitignore; -*-
 
-/behave/*-endpoints
-/behave/*-reset.sql
+*.state
 
 *~
 \#*\#
