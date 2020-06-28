@@ -1,6 +1,7 @@
 # -*- mode: gitignore; -*-
 
 *.state
+e2e/*.sql
 
 *~
 \#*\#
