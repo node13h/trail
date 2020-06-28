@@ -5,15 +5,20 @@ set -euo pipefail
 PG_IMAGE='postgres:9.6-alpine'
 
 ACTION="$1"
-shift
+STATE_FILE="$2"
+shift 2
 
 
 start () {
-    declare ns="$1"
-    declare state_file="$2"
-    declare dev_stack_state_file="$3"
-    declare reset_sql_file="$4"
-    declare app_port="$5"
+    declare deployment_id="$1"
+    declare dev_stack_state_file="$2"
+    declare reset_sql_file="$3"
+    declare app_port="$4"
+
+    if [[ -s "$STATE_FILE" ]]; then
+        printf 'State file %s already exists\n' "$STATE_FILE"
+        exit 1
+    fi
 
     # shellcheck disable=SC1090
     source "$dev_stack_state_file"
@@ -27,39 +32,46 @@ start () {
 
     podman run --rm --network host --entrypoint pg_dump \
            -e PGPASSWORD=hunter2 \
-           "$PG_IMAGE" -h "$PG_ADDRESS" -p "$PG_PORT" -U postgres -c postgres > "$reset_sql_file"
+           "$PG_IMAGE" -h "$PG_ADDRESS" -p "$PG_PORT" -U postgres -c postgres >"$reset_sql_file"
 
-    podman run -d --rm --network host --name "${ns}-app" \
-           -e "DATABASE_URL=postgres://postgres:hunter2@${PG_ADDRESS}:${PG_PORT}/postgres" \
-           -e "PORT=${app_port}" \
-           "$app_image" start
+    declare app_container
+    app_container=$(podman run -d --rm --network host --name "${deployment_id}-app" \
+                           -e "DATABASE_URL=postgres://postgres:hunter2@${PG_ADDRESS}:${PG_PORT}/postgres" \
+                           -e "PORT=${app_port}" \
+                           "$app_image" start)
+    cat <<EOF >>"$STATE_FILE"
+APP_CONTAINER=${app_container}
+APP_URL=http://localhost:${app_port}
+EOF
 
+    printf 'Waiting for the app '
     until
         curl -Lfs --output /dev/null "http://localhost:${app_port}"
     do
-        echo Wait for app
+        printf '.'
         sleep 1
     done
+    printf ' done.\n'
 
-    cat <<EOF > "$state_file"
-APP_URL=http://localhost:${app_port}
+    cat <<EOF >>"$STATE_FILE"
+DEPLOYMENT_ID=${deployment_id}
 EOF
 }
 
 
 stop () {
-    declare ns="$1"
-    declare state_file="$2"
+    if ! [[ -e "$STATE_FILE" ]]; then
+        return 0
+    fi
 
-    podman stop -i "${ns}-app"
+    # shellcheck disable=SC1090
+    source "$STATE_FILE"
 
-    while
-        podman container exists "${ns}-app"
-    do
-        sleep 1
-    done
+    if [[ -v APP_CONTAINER ]]; then
+        podman stop -i "$APP_CONTAINER"
+    fi
 
-    rm -f -- "$state_file"
+    rm -f -- "$STATE_FILE"
 }
 
 

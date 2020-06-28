@@ -1,16 +1,16 @@
 DOCKER_TAG := latest
 DOCKER_REPOSITORY := docker.io/alikov/trail
 
-NS = trail-dev
+DEPLOYMENT_ID = trail-dev
 
 MODE := local
 
-DEV_STACK_STATE_FILE = $(NS)-dev-stack.state
+DEV_STACK_STATE_FILE = $(DEPLOYMENT_ID)-dev-stack.state
 DEV_STACK_PG_PORT := 5432
 
 APP_PORT := 3000
-APP_STATE_FILE = $(NS)-app.state
-RESET_SQL_FILE = ./e2e/$(NS)-reset.sql
+APP_STATE_FILE = $(DEPLOYMENT_ID)-app.state
+RESET_SQL_FILE = ./e2e/$(DEPLOYMENT_ID)-reset.sql
 
 export RELEASE_REMOTE := origin
 
@@ -20,35 +20,23 @@ all:
 	true
 
 
-.PHONY: local-dev-stack local-dev-stack-down dev-stack dev-stack-down local-app local-app-down app app-down
+.PHONY: dev-stack dev-stack-down app app-down
 
 $(DEV_STACK_STATE_FILE):
-	$(MAKE) $(MODE)-dev-stack
+	./scripts/$(MODE)-dev-stack.sh start $(DEV_STACK_STATE_FILE) $(DEPLOYMENT_ID) \
+	  $(DEV_STACK_PG_PORT)
 
 dev-stack: $(DEV_STACK_STATE_FILE)
 dev-stack-down:
-	$(MAKE) $(MODE)-dev-stack-down
+	./scripts/$(MODE)-dev-stack.sh stop $(DEV_STACK_STATE_FILE)
 
-local-dev-stack:
-	./scripts/local-dev-stack.sh start $(NS) $(DEV_STACK_STATE_FILE) \
-	  $(DEV_STACK_PG_PORT)
-
-local-dev-stack-down:
-	./scripts/local-dev-stack.sh stop $(NS) $(DEV_STACK_STATE_FILE)
-
-$(APP_STATE_FILE) $(RESET_SQL_FILE):
-	$(MAKE) $(MODE)-app
+$(APP_STATE_FILE) $(RESET_SQL_FILE): target/server.jar
+	./scripts/$(MODE)-app.sh start $(APP_STATE_FILE) $(DEPLOYMENT_ID) $(DEV_STACK_STATE_FILE) \
+	  $(RESET_SQL_FILE) $(APP_PORT)
 
 app: $(APP_STATE_FILE)
 app-down:
-	$(MAKE) $(MODE)-app-down
-
-local-app: $(DEV_STACK_STATE_FILE) target/server.jar
-	./scripts/local-app.sh start $(NS) $(APP_STATE_FILE) $(DEV_STACK_STATE_FILE) \
-	  $(RESET_SQL_FILE) $(APP_PORT)
-
-local-app-down:
-	./scripts/local-app.sh stop $(NS) $(APP_STATE_FILE) $(RESET_SQL_FILE)
+	./scripts/local-app.sh stop $(APP_STATE_FILE)
 
 
 .PHONY: e2e-test
