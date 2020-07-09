@@ -1,4 +1,4 @@
-DOCKER_TAG := latest
+DOCKER_TAG := $(shell cat VERSION)
 DOCKER_REPOSITORY := docker.io/alikov/trail
 
 DEPLOYMENT_ID = trail-dev
